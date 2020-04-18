@@ -417,4 +417,14 @@ main .about img { max-width: 150px; }
 
 #posts-label { border-bottom: 1px solid #eee; font-size: 15px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 10px; font-weight: normal; }
 
+body { font: Georgia,"Raleway", sans-serif; }
+
+main .about img { border-radius: 50%; }
+
+.vm-images { display: flex; flex-direction: row; justify-content: space-around; }
+
+.vm-images .vm-images__image { width: 47%; }
+
+@media screen and (max-width: 768px) { .vm-images { flex-direction: column; } .vm-images .vm-images__image { width: 100%; } .vm-images .vm-images__image + .vm-images__image { margin-top: 16px; } }
+
 /*# sourceMappingURL=style.css.map */
