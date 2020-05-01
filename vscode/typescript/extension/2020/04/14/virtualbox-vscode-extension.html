@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
   <head><meta charset="UTF-8">
+<meta name="google-site-verification" content="zNIoPhlH09hYt1KC8ZJ3TZr6hzDb9l3_04kEKsPLUCQ" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="ie=edge">
 <link href="https://fonts.googleapis.com/css?family=Merriweather:300|Raleway:400,700" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/style.css">
 <title>Пишем Visual Studio Code extension для VirtualBox</title>
 <!-- Begin Jekyll SEO tag v2.6.1 -->
-<title>Пишем Visual Studio Code extension для VirtualBox</title>
+<title>Пишем Visual Studio Code extension для VirtualBox | Блог Черкашина Александра</title>
 <meta name="generator" content="Jekyll v4.0.0" />
 <meta property="og:title" content="Пишем Visual Studio Code extension для VirtualBox" />
 <meta property="og:locale" content="en_US" />
@@ -15,35 +16,21 @@
 <meta property="og:description" content="VS Code достаточно мощный текстовый редактор, куда с помощью различных расширений интегрирована куча всевозможных инструментов. Мне всегда невероятно больно, когда нужно покидать его, потому что я сразу начинаю путаться в окнах и забываю, что я вообще хотел сделать. Я думаю, каждый хоть раз терялся в трех соснах во всех открытых им окнах, поэтому предположу, что вам это знакомо. У меня установлено несколько виртуальных машин, и меня невероятно раздражает, что для их запуска нужно открыть VirtualBox просто чтобы нажать кнопку Run. Собственно говоря, сегодня я расскажу, как избавился от своей боли." />
 <link rel="canonical" href="https://www.cherkashin.dev/vscode/typescript/extension/2020/04/14/virtualbox-vscode-extension.html" />
 <meta property="og:url" content="https://www.cherkashin.dev/vscode/typescript/extension/2020/04/14/virtualbox-vscode-extension.html" />
+<meta property="og:site_name" content="Блог Черкашина Александра" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2020-04-14T16:30:32+03:00" />
 <script type="application/ld+json">
-{"headline":"Пишем Visual Studio Code extension для VirtualBox","dateModified":"2020-04-14T16:30:32+03:00","datePublished":"2020-04-14T16:30:32+03:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.cherkashin.dev/vscode/typescript/extension/2020/04/14/virtualbox-vscode-extension.html"},"url":"https://www.cherkashin.dev/vscode/typescript/extension/2020/04/14/virtualbox-vscode-extension.html","description":"VS Code достаточно мощный текстовый редактор, куда с помощью различных расширений интегрирована куча всевозможных инструментов. Мне всегда невероятно больно, когда нужно покидать его, потому что я сразу начинаю путаться в окнах и забываю, что я вообще хотел сделать. Я думаю, каждый хоть раз терялся в трех соснах во всех открытых им окнах, поэтому предположу, что вам это знакомо. У меня установлено несколько виртуальных машин, и меня невероятно раздражает, что для их запуска нужно открыть VirtualBox просто чтобы нажать кнопку Run. Собственно говоря, сегодня я расскажу, как избавился от своей боли.","@context":"https://schema.org"}</script>
+{"url":"https://www.cherkashin.dev/vscode/typescript/extension/2020/04/14/virtualbox-vscode-extension.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.cherkashin.dev/vscode/typescript/extension/2020/04/14/virtualbox-vscode-extension.html"},"description":"VS Code достаточно мощный текстовый редактор, куда с помощью различных расширений интегрирована куча всевозможных инструментов. Мне всегда невероятно больно, когда нужно покидать его, потому что я сразу начинаю путаться в окнах и забываю, что я вообще хотел сделать. Я думаю, каждый хоть раз терялся в трех соснах во всех открытых им окнах, поэтому предположу, что вам это знакомо. У меня установлено несколько виртуальных машин, и меня невероятно раздражает, что для их запуска нужно открыть VirtualBox просто чтобы нажать кнопку Run. Собственно говоря, сегодня я расскажу, как избавился от своей боли.","@type":"BlogPosting","headline":"Пишем Visual Studio Code extension для VirtualBox","dateModified":"2020-04-14T16:30:32+03:00","datePublished":"2020-04-14T16:30:32+03:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 </head>
-  <body><!-- Yandex.Metrika counter -->
-    <script type="text/javascript" >
-        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-        ym(62071573, "init", {
-            clickmap:true,
-            trackLinks:true,
-            accurateTrackBounce:true,
-            webvisor:true
-        });
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/62071573" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Yandex.Metrika counter -->
-    
+  <body>
     <main class="container">
       <section class="about">
-        <a href="/"><img src="/assets/portfolio.png" alt="Cherkashin Alexander"></a>
+        <a href="/"><img src="/assets/portfolio.png" alt="Черкашин Александр"></a>
         <h2 id="title">
-          <a href="/">Cherkashin Alexander</a>
+          <a href="/">Черкашин Александр</a>
         </h2>
-        <p class="tagline">Developer</p>
+        <p class="tagline">Разработчик</p>
         <ul class="social"><a href="https://github.com/acherkashin">
               <li>
                 <i class="icon-github-circled"></i>
@@ -58,7 +45,15 @@
   </a>
   <div class="post-meta">
     <ul class="post-categories"><li>vscode</li><li>typescript</li><li>extension</li></ul>
-    <div class="post-date"><i class="icon-calendar"></i>Apr 14, 2020</div>
+    <div class="post-date">
+        <i class="icon-calendar"></i>
+        
+
+
+
+
+<span class="date">14 Апреля 2020</span>
+    </div>
   </div>
   <div class="post">
     <p>VS Code достаточно мощный текстовый редактор, куда с помощью различных расширений интегрирована куча всевозможных инструментов. Мне всегда невероятно больно, когда нужно покидать его, потому что я сразу начинаю путаться в окнах и забываю, что я вообще хотел сделать. Я думаю, каждый хоть раз терялся <del>в трех соснах</del> во всех открытых им окнах, поэтому предположу, что вам это знакомо. У меня установлено несколько виртуальных машин, и меня невероятно раздражает, что для их запуска нужно открыть VirtualBox просто чтобы нажать кнопку <strong>Run</strong>. Собственно говоря, сегодня я расскажу, как избавился от своей боли.</p>

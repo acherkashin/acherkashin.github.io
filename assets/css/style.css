@@ -417,9 +417,13 @@ main .about img { max-width: 150px; }
 
 #posts-label { border-bottom: 1px solid #eee; font-size: 15px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 10px; font-weight: normal; }
 
-body { font: Georgia,"Raleway", sans-serif; }
+body { font: normal normal 1rem/1.45 "Raleway", Georgia, serif !important; }
 
 main .about img { border-radius: 50%; }
+
+.post-read { font-size: 14px; float: left; border: 2px solid #7b7a7a; color: #7b7a7a; padding: 5px 20px; opacity: 0.8; text-decoration: none; }
+
+.post-read:hover { background-color: #7b7a7a; color: white; }
 
 .vm-images { display: flex; flex-direction: row; justify-content: space-around; }
 
