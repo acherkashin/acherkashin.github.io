@@ -3,11 +3,11 @@
 	"file": "style.css",
 	"sources": [
 		"style.scss",
-		"C:/Ruby27-x64/lib/ruby/gems/2.7.0/gems/plainwhite-0.9/_sass/plain.scss",
-		"C:/Ruby27-x64/lib/ruby/gems/2.7.0/gems/plainwhite-0.9/_sass/ext/_fonts.scss",
-		"C:/Ruby27-x64/lib/ruby/gems/2.7.0/gems/plainwhite-0.9/_sass/ext/_normalize.scss",
-		"C:/Ruby27-x64/lib/ruby/gems/2.7.0/gems/plainwhite-0.9/_sass/_syntax.scss",
-		"C:/Ruby27-x64/lib/ruby/gems/2.7.0/gems/plainwhite-0.9/_sass/ext/_solarized-light.scss"
+		"../../../../home/cherkashin/gems/gems/plainwhite-0.9/_sass/plain.scss",
+		"../../../../home/cherkashin/gems/gems/plainwhite-0.9/_sass/ext/_fonts.scss",
+		"../../../../home/cherkashin/gems/gems/plainwhite-0.9/_sass/ext/_normalize.scss",
+		"../../../../home/cherkashin/gems/gems/plainwhite-0.9/_sass/_syntax.scss",
+		"../../../../home/cherkashin/gems/gems/plainwhite-0.9/_sass/ext/_solarized-light.scss"
 	],
 	"sourcesContent": [
 		"@import \"plain.scss\";\n\nbody {\n  font: normal normal 1rem/1.45 \"Raleway\", Georgia, serif !important;\n}\n\nmain .about img {\n  border-radius: 50%;\n}\n\n.post-read {\n  font-size: 14px;\n  border: 2px solid #7b7a7a;\n  color: #7b7a7a;\n  padding: 5px 20px;\n  opacity: 0.8;\n  text-decoration: none;\n  \n  &:hover {\n    background-color: #7b7a7a;\n    color: white;\n  }\n}\n\n.vm-images {\n  display: flex;\n  flex-direction: row;\n  justify-content: space-around;\n  .vm-images__image {\n    width: 47%;\n  }\n}\n\n@media screen and (max-width: 768px){\n  .vm-images {\n    flex-direction: column;\n    \n    .vm-images__image {\n      width: 100%;\n\n      & + .vm-images__image {\n        margin-top: 16px;\n      }\n    }\n  }\n}",
