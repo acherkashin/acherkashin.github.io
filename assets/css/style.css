@@ -431,4 +431,26 @@ main .about img { border-radius: 50%; }
 
 @media screen and (max-width: 768px) { .vm-images { flex-direction: column; } .vm-images .vm-images__image { width: 100%; } .vm-images .vm-images__image + .vm-images__image { margin-top: 16px; } }
 
+.centering { display: flex; flex-direction: row; justify-content: space-around; }
+
+.key { background-color: #f1f1f1; border: 1px solid #666; border-width: 1px 2px 2px 1px; border-radius: 5px; color: #333; padding: 0 2px; margin: 1px; font-weight: bold; min-width: 17px; display: inline-block; text-align: center; }
+
+.quote { margin: 0 auto; padding: 1em; border-left: 5px solid #999; }
+
+.quote:before { display: none; }
+
+.quote p { color: #444; font-size: 12pt; line-height: 1.4; }
+
+.quote footer { margin-top: 0.5em; padding: 0; color: #666; font-size: 12pt; text-align: left; font-style: italic; }
+
+.quote footer:before { content: "— "; }
+
+.quote--right { text-align: right; border-left: none; border-right: 5px solid #999; }
+
+.quote--right footer { text-align: right; }
+
+.quote--right footer:before { content: ""; }
+
+.quote--right footer:after { content: " —"; }
+
 /*# sourceMappingURL=style.css.map */
