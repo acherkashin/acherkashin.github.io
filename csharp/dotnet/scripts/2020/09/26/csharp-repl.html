@@ -16,15 +16,15 @@
 <meta name="generator" content="Jekyll v4.0.0" />
 <meta property="og:title" content="C# Interactive - REPL" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="Несколько лет назад, я заметил, что в Visual Studio появилась новая окошко “C# Interactive”. Eщё тогда я стал догадываться, что это REPL, однако только недавно решил разобраться, что оно из себя представляет и в каких случаях может быть полезно. Прежде чем мы перейдём, к “С# Interactive” давайте кратко обсудим, что же такое REPL" />
-<meta property="og:description" content="Несколько лет назад, я заметил, что в Visual Studio появилась новая окошко “C# Interactive”. Eщё тогда я стал догадываться, что это REPL, однако только недавно решил разобраться, что оно из себя представляет и в каких случаях может быть полезно. Прежде чем мы перейдём, к “С# Interactive” давайте кратко обсудим, что же такое REPL" />
+<meta name="description" content="Несколько лет назад я заметил, что в Visual Studio появилась новая окошко “C# Interactive”. Eщё тогда я стал догадываться, что это REPL, однако только недавно решил разобраться, что оно из себя представляет и в каких случаях может быть полезно. Прежде чем мы перейдём, к “С# Interactive” давайте кратко обсудим, что же такое REPL" />
+<meta property="og:description" content="Несколько лет назад я заметил, что в Visual Studio появилась новая окошко “C# Interactive”. Eщё тогда я стал догадываться, что это REPL, однако только недавно решил разобраться, что оно из себя представляет и в каких случаях может быть полезно. Прежде чем мы перейдём, к “С# Interactive” давайте кратко обсудим, что же такое REPL" />
 <link rel="canonical" href="https://www.cherkashin.dev/csharp/dotnet/scripts/2020/09/26/csharp-repl.html" />
 <meta property="og:url" content="https://www.cherkashin.dev/csharp/dotnet/scripts/2020/09/26/csharp-repl.html" />
 <meta property="og:site_name" content="Блог Черкашина Александра" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2020-09-26T12:00:00+03:00" />
 <script type="application/ld+json">
-{"headline":"C# Interactive - REPL","dateModified":"2020-09-26T12:00:00+03:00","datePublished":"2020-09-26T12:00:00+03:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.cherkashin.dev/csharp/dotnet/scripts/2020/09/26/csharp-repl.html"},"description":"Несколько лет назад, я заметил, что в Visual Studio появилась новая окошко “C# Interactive”. Eщё тогда я стал догадываться, что это REPL, однако только недавно решил разобраться, что оно из себя представляет и в каких случаях может быть полезно. Прежде чем мы перейдём, к “С# Interactive” давайте кратко обсудим, что же такое REPL","url":"https://www.cherkashin.dev/csharp/dotnet/scripts/2020/09/26/csharp-repl.html","@type":"BlogPosting","@context":"https://schema.org"}</script>
+{"headline":"C# Interactive - REPL","dateModified":"2020-09-26T12:00:00+03:00","datePublished":"2020-09-26T12:00:00+03:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.cherkashin.dev/csharp/dotnet/scripts/2020/09/26/csharp-repl.html"},"description":"Несколько лет назад я заметил, что в Visual Studio появилась новая окошко “C# Interactive”. Eщё тогда я стал догадываться, что это REPL, однако только недавно решил разобраться, что оно из себя представляет и в каких случаях может быть полезно. Прежде чем мы перейдём, к “С# Interactive” давайте кратко обсудим, что же такое REPL","url":"https://www.cherkashin.dev/csharp/dotnet/scripts/2020/09/26/csharp-repl.html","@type":"BlogPosting","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 </head>
   <body>
@@ -83,7 +83,7 @@
     </div>
   </div>
   <div class="post">
-    <p>Несколько лет назад, я заметил, что в Visual Studio появилась новая окошко “C# Interactive”. Eщё тогда я стал догадываться, что это REPL, однако только недавно решил разобраться, что оно из себя представляет и в каких случаях может быть полезно. Прежде чем мы перейдём, к “С# Interactive” давайте кратко обсудим, что же такое <a href="https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop">REPL</a></p>
+    <p>Несколько лет назад я заметил, что в Visual Studio появилась новая окошко “C# Interactive”. Eщё тогда я стал догадываться, что это REPL, однако только недавно решил разобраться, что оно из себя представляет и в каких случаях может быть полезно. Прежде чем мы перейдём, к “С# Interactive” давайте кратко обсудим, что же такое <a href="https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop">REPL</a></p>
 <h2 id="repl">Что такое REPL?</h2>
 <div class="centering">
 <p><img src="/assets/repl/repl-meme.png" alt="Repl meme" /></p>
@@ -151,7 +151,7 @@
 </div>
 <p>Для запуска dotnet script необходимо запустить в консоли <code>dotnet script</code> или <code>dotnet-script</code>. Как вы уже заметили из примера, для подключения библиотеки из Nuget используется следующая запись: <code>#r &quot;nuget: &lt;library&gt;, &lt;version&gt;&quot;</code>, в нашем случае - это <code>#r &quot;nuget: Octokit, 0.48.0&quot;</code>. Первый запуск команды займет некоторое время, так как будет происходить скачивание библиотеки, но в дальнейшем, запуск команды будет занимать гораздо меньше времени, так как библиотека будет закэширована.</p>
 <p>DotNet Script использует .net core и поэтому является кросплатформенным, благодаря чему вы можете запустить его на любой платформе.</p>
-<p>Однако, чтобы получить intellisense для dotnet script вам необходимо использовать текстовый редактор, <a href="http://www.omnisharp.net/">поддерживающий OmniSharp</a>. Я покажу как это сделать на примере уже знакомого нам, примера с Octokit в Visual Studio Code. Для начала нам нужно инициализировать новый проект dotnet script с помощью команды <code>dotnet script init</code>.</p>
+<p>Однако, чтобы получить intellisense для dotnet script вам необходимо использовать текстовый редактор, <a href="http://www.omnisharp.net/">поддерживающий OmniSharp</a>. Я покажу, как это сделать, на примере уже знакомого нам примера с Octokit в Visual Studio Code. Для начала нам нужно инициализировать новый проект dotnet script с помощью команды <code>dotnet script init</code>.</p>
 <div class="centering">
 <p><img src="/assets/repl/dotnet-script-init.png" alt="Инициализация проекта DotNet Script" /></p>
 </div>
