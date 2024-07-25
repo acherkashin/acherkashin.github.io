@@ -1,0 +1,427 @@
+---
+layout: ../../layouts/post.astro
+title: 'Пишем Visual Studio Code extension для VirtualBox'
+pubDate: 2020-04-14
+author: Cherkashin
+excerpt: VS Code достаточно мощный текстовый редактор, куда с помощью различных расширений интегрирована куча всевозможных инструментов. Мне всегда невероятно больно, когда нужно покидать его, потому что я сразу начинаю путаться в окнах и забываю, что я вообще хотел сделать. Я думаю, каждый хоть раз терялся ~~в трех соснах~~ во всех открытых им окнах, поэтому предположу, что вам это знакомо. У меня установлено несколько виртуальных машин, и меня невероятно раздражает, что для их запуска нужно открыть VirtualBox просто чтобы нажать кнопку **Run**. Собственно говоря, сегодня я расскажу, как избавился от своей боли.
+description: 'SEO description'
+image:
+  src:
+  alt:
+tags: ['vscode', 'typescript', 'extension']
+---
+
+VS Code достаточно мощный текстовый редактор, куда с помощью различных расширений интегрирована куча всевозможных инструментов. Мне всегда невероятно больно, когда нужно покидать его, потому что я сразу начинаю путаться в окнах и забываю, что я вообще хотел сделать. Я думаю, каждый хоть раз терялся ~~в трех соснах~~ во всех открытых им окнах, поэтому предположу, что вам это знакомо. У меня установлено несколько виртуальных машин, и меня невероятно раздражает, что для их запуска нужно открыть VirtualBox просто чтобы нажать кнопку **Run**. Собственно говоря, сегодня я расскажу, как избавился от своей боли.
+
+Это статья проведет вас через весь путь создания VirtualBox extension - от генерации базового шаблона, до управления виртуалками из VS Code.
+
+## Research
+
+Прежде чем бежать сломя голову и начинать что-то писать, нужно посмотреть, возможно уже есть что-то готовое. Поэтому отправляемся в [VSCode Marketplace](https://marketplace.visualstudio.com/vscode) и убеждаемся, что, к сожалению, ничего готового нет, и всё придется делать самим. Но ещё не все потеряно, и мы отправляемся на просторы [github](https://github.com/), чтобы найти хоть что-то и находим npm пакет [node-virtualbox](https://github.com/Node-Virtualization/node-virtualbox), который мы и будем использовать для управления виртуалками.
+
+## Генерация базового темплейта
+
+Если вы читаете эту статью, то наверняка у вас установлены [Node.js](https://nodejs.org/en/) и [Git](https://git-scm.com/), поэтому просто установите [Yeoman](http://yeoman.io/) и [VS Code Extension Generator](https://www.npmjs.com/package/generator-code).
+
+```bash
+npm install -g yo generator-code
+```
+
+После чего необходимо сгенерировать, собственно, сам темплейт. Запустите следующую комманду и заполните несколько полей
+
+```bash
+you code
+
+# ? What type of extension do you want to create? New Extension (TypeScript)
+# ? What's the name of your extension? virtualbox-vscode-extension
+### Press <Enter> to choose default for all options below ###
+
+# ? What's the identifier of your extension? virtualbox-vscode-extension
+# ? What's the description of your extension? LEAVE BLANK
+# ? Initialize a git repository? Yes
+# ? Which package manager to use? yarn
+
+code ./virtualbox-vscode-extension
+```
+
+Подробнее о структуре сгенерированного расширения вы можете узнать [в официальной документации](https://code.visualstudio.com/api/get-started/extension-anatomy).
+
+## Немного о компонентах расширения
+
+Если вы уже некоторое время пользуетесь VSCode и различными расширениями, то наверняка могли заметить, что все они выглядят достаточно стандартизированно. Несмотря на то, что VSCode написан на Electron, это не означает, что вы можете использовать все его API и верстать все что вам захочется. Ну на самом деле, есть [одно место, где вам всё дозволено... ну почти всё ...](https://code.visualstudio.com/api/extension-guides/webview) В остальном же, весь редактор разбит на определенные секции, которые вы можете расширять с помощью определенных компонентов, одним из которых является [TreeView](https://code.visualstudio.com/api/extension-guides/tree-view), который мы и будем использовать.
+
+## Подготовка
+
+К сожалению, API предоставляемый пакетом [virtualbox](https://github.com/Node-Virtualization/node-virtualbox) работает на колбэках, а сама библиотека написана на JavaScript, поэтому нам необходимо провести некоторую подготовительную работу.
+
+1. Добавим папку `typings` в корень проекта и создадим в ней файл `virtualbox.d.ts` со всеми тайпингами, которые нам понадобятся. Таким образом мы добавляем типизация для библиотеки, которая написана на JS и не содержит готовых тайпингов.
+
+```ts
+declare module 'virtualbox' {
+	export interface VMList {
+		[id: string]: { name: string; running: boolean };
+	}
+
+	export interface VBoxError {
+		message: string;
+	}
+
+	export function list(callback: (list: VMList, error?: VBoxError) => void): void;
+	export function start(
+		vmId: string,
+		use_gui: boolean,
+		callback: (error?: VBoxError) => void
+	): void;
+	export function isRunning(
+		vmId: string,
+		callback: (error: VBoxError, result: boolean) => void
+	): void;
+	export function savestate(vmId: string, callback: (error?: VBoxError) => void): void;
+	export function poweroff(vmId: string, callback: (error?: VBoxError) => void): void;
+}
+```
+
+2. Проведем [промисификацию](https://learn.javascript.ru/promisify), для интересующих нас методов.
+
+```ts
+import * as virtualbox from 'virtualbox';
+import { promisify } from 'util';
+
+export interface VirtualMachine {
+	id: string;
+	name: string;
+	running: boolean;
+	os: string;
+}
+
+export const isRunning = promisify(virtualbox.isRunning);
+export const saveState = promisify(virtualbox.savestate);
+export const powerOff = promisify(virtualbox.poweroff);
+
+export function startWithGui(vmId: string): Promise<void> {
+	return new Promise((resolve, reject) => {
+		virtualbox.start(vmId, true, (error) => {
+			if (error) {
+				reject(error);
+			} else {
+				resolve();
+			}
+		});
+	});
+}
+
+export function getAllVms(): Promise<VirtualMachine[]> {
+	return new Promise((resolve, reject) => {
+		virtualbox.list(async (list, error) => {
+			if (error) {
+				reject(error);
+			} else {
+				const vmsPromise = Object.keys(list).map(
+					async (vmId) =>
+						({
+							id: vmId,
+							name: list[vmId].name,
+							running: list[vmId].running
+						}) as VirtualMachine
+				);
+
+				const vms = await Promise.all(vmsPromise);
+				resolve(vms);
+			}
+		});
+	});
+}
+```
+
+## Contribution points
+
+Как я уже говорил ранее, VS Code разбит на определенные секции и предоставляет возможность расширять встроенную функциональность с помощью JSON деклараций, называемых [Contribution Points](https://code.visualstudio.com/api/references/contribution-points). В данном случае нас интересует два вида деклараций: [viewsContainers](https://code.visualstudio.com/api/references/contribution-points#contributes.viewsContainers) и [views](https://code.visualstudio.com/api/references/contribution-points#contributes.views). Теперь нам необходимо открыть `package.json` в папке с расширением и найдем поле `contribution`, и заменим его содержимое на следующее:
+
+```json
+"contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "virtual-box-explorer",
+          "title": "Virtual Machines",
+          "icon": "resources/virtualbox.svg"
+        }
+      ]
+    },
+    "views": {
+      "virtual-box-explorer": [
+        {
+          "id": "vb-machines",
+          "name": "Virtual Machines"
+        }
+      ]
+    }
+}
+```
+
+Теперь давайте разберемся, что здесь происходит. Мы объявляем _viewContainer_ с идентификатором _virtual-box-explorer_ и указываем, что он будет находится в _activitybar_, это хорошо известная нам боковая панель, в которой находятся такие _viewsContainers_ как _Explorer_, _Search_, _Git_, _Debugger_ и т.д. Далее мы объявляем _view_ с идентификатором _vb-machines_ и указываем, что оно будет находится внутри _viewContainer_ с идентификатором _virtual-box-explorer_.
+
+Вы наверняка заметили, что я объявил контейнер с иконкой `resources/virtualbox.svg`. Размер и цвет иконок VS Code также стандартизированы, поэтому я заранее её подготовил, а вы просто скачайте её из [репозитория](https://github.com/acherkashin/virtualbox-vscode-extension/blob/master/resources/virtualbox.svg).
+
+Также стоит остановиться на ещё одном очень важном аспекте. Ваше расширение будет активировано только после запуска активирующего события, которые перечислены в поле `actionvationEvents` в `package.json`, это сделано для увеличения производительности, чтобы все расширения не загружались одновременно и не просаживали производительность. Нам необходимо чтобы расширение запускалось при открытии _view_, для этого заменим его содержимое на следующее:
+
+```json
+"activationEvents": [
+    "onView:vb-machines"
+]
+```
+
+Теперь можем приступить к самой интересной части ...
+
+## Выводим список доступных виртуальных машин
+
+Теперь, когда всё готово, приступим к выводу списка виртуальных машин (убедитесь, что у вас установлен VirtualBox). Если вы ещё не забыли, то для отображения списка виртуальных машин мы будем использовать дерево (`TreeView`), где каждая виртуальная машина будет корневым узлом. Для этого нам необходимо создать класс, который реализует интерфейс `TreeDataProvider`, с помощью которого `TreeView` будет понимать, какие данные необходимо отобразить. Ну что ж, создадим два файла в папке `src`:
+
+- `vmsProvider.ts` - содержит реализацию `TreeDataProvider`;
+- `vmTreeitem.ts` - содержит реализацию узла дерева, который будем отображать виртуальную машину.
+
+```ts
+// vmTreeitem.ts
+
+import * as vscode from 'vscode';
+import { VirtualMachine } from './utils';
+
+export class VirtualMachineTreeItem extends vscode.TreeItem {
+	constructor(public readonly vm: VirtualMachine) {
+		super(vm.name);
+
+		this.id = vm.id;
+		// Отображаем соответствующие иконки для запущенной и выключенной виртуальных машин
+		// https://microsoft.github.io/vscode-codicons/dist/codicon.html - стандартные иконки codicon
+		// https://code.visualstudio.com/updates/v1_42#_codicons-for-reuse - как использовать codicon в своих расширениях
+		this.iconPath = vm.running ? new vscode.ThemeIcon('vm-running') : new vscode.ThemeIcon('vm');
+		// В зависимости от значения contextValue мы можем отображать те или иные экшены для узла дерева.
+		// С этим мы разберемся в следующей главе
+		this.contextValue = vm.running ? 'vmRunning' : 'vmStopped';
+	}
+}
+
+// vmsProvider.ts
+
+import * as vscode from 'vscode';
+import { getAllVms } from './utils';
+import { VirtualMachineTreeItem } from './vmTreeitem';
+
+export class VirtualMachinesProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+	private _onDidChangeTreeData: vscode.EventEmitter<VirtualMachineTreeItem | undefined> =
+		new vscode.EventEmitter<VirtualMachineTreeItem | undefined>();
+	readonly onDidChangeTreeData: vscode.Event<VirtualMachineTreeItem | undefined> =
+		this._onDidChangeTreeData.event;
+
+	// Метод не является частью интерфейса TreeDataProvider.
+	// С его помощью мы можем принудительно перезагрузить дерево или определенный узел,
+	// например, когда состояния виртуальной машины изменилось (выключилась/включилась)
+	refresh(item?: VirtualMachineTreeItem): void {
+		this._onDidChangeTreeData.fire(item);
+	}
+
+	getTreeItem(element: vscode.TreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+		return element;
+	}
+
+	getChildren(element?: vscode.TreeItem): vscode.ProviderResult<vscode.TreeItem[]> {
+		return getAllVms()
+			.then((vms) => vms.map((vm) => new VirtualMachineTreeItem(vm)))
+			.catch((err) => {
+				// Показываем сообщение с ошибкой, если вдруг всё пошло не по плану
+				vscode.window.showErrorMessage(err);
+				return [];
+			});
+	}
+}
+```
+
+И теперь нам необходимо зарегистрировать созданный `VirtualMachinesProvider`. Для этого в файле `extension.ts` заменим метод `activate` на следующий:
+
+```ts
+export function activate(context: vscode.ExtensionContext) {
+	const vmProvider = new VirtualMachinesProvider();
+	// Регистрируем TreeView внутри "vb-machines"
+	vscode.window.registerTreeDataProvider('vb-machines', vmProvider);
+}
+```
+
+Давайте наконец-то запустим наш extension:
+
+![Список виртуальных машин](/assets/virtualbox-vscode-extension/vms-list.png)
+
+Отлично! Идём дальше! 🎉🎉🎉
+
+## Реализовываем управление виртуальными машинами
+
+Мы сделали первый шаг, но расширение всё ещё совершенно бесполезное, поэтому давайте заставим его приносить хоть какую-то пользу. Запуск любых действий в VS Code производится с помощью [команд](https://code.visualstudio.com/api/extension-guides/command). Команды добавляются с помощью уже хорошо нам знакомых [Contribution Points](https://code.visualstudio.com/api/references/contribution-points). Давайте добавим две команды в узлы дерева с нашими виртуальными машинами:
+
+- для включения виртуальной машины - `virtualbox-extension.runVM`
+- для выключения виртуальной машины - `virtualbox-extension.saveStateVM`
+
+для этого нужно добавить поля `commands` и `menus` в секцию `contributes`:
+
+```json
+"contributes": {
+    // ...
+    "commands": [
+      {
+        "command": "virtualbox-extension.runVM",
+        "category": "Virtual Box",
+        "title": "Run Virtual Machine",
+        "icon": "$(run)"
+      },
+      {
+        "command": "virtualbox-extension.saveStateVM",
+        "category": "Virtual Box",
+        "title": "Stop Virtual Machine (state will be saved)",
+        "icon": "$(debug-stop)"
+      }
+    ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "virtualbox-extension.runVM",
+          "group": "inline",
+          "when": "viewItem == vmStopped && view == vb-machines"
+        },
+        {
+          "command": "virtualbox-extension.saveStateVM",
+          "group": "inline",
+          "when": "viewItem == vmRunning && view == vb-machines"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "virtualbox-extension.runVM",
+          "when": "false"
+        },
+        {
+          "command": "virtualbox-extension.saveStateVM",
+          "when": "false"
+        }
+      ]
+    }
+  }
+```
+
+Давайте разберемся, что здесь происходит.
+
+Все команды, необходимые для расширения помещаются в секцию `commands`, поэтому именно сюда мы добавляем наши команды и указываем для них `category`, `title` и `icon`. Для того, чтобы поместить команду в виде кнопки в наше дерево, необходимо добавить секцию `menus`, содержащей секцию `view/item/context`. Здесь необходимо обратить внимание на поле [`when`](https://code.visualstudio.com/docs/getstarted/keybindings#_when-clause-contexts) с помощью которого можно регулировать видимость команды внутри узла дерева. Здесь нам и пригодится `contextValue`, которое мы объявили в `VirtualMachineTreeItem`, чтобы показывать кнопку запуска для выключенной виртуалки и кнопку выключения для запущенной. Подробнее обо всём этом можно почитать в [официальной документации для TreeView](https://code.visualstudio.com/api/extension-guides/tree-view). Ну и для простоты мы скроем наши команды из _Command Palette_ (панель которая показывается при нажатии `CTRL/CMD+P`) с помощью `menus.commandPalette`.
+
+Теперь нам необходимо зарегистрировать обработчики для объявленных команд. Добавим следующий код в метод `activate` в файле `extension.ts`:
+
+```ts
+context.subscriptions.push(
+	vscode.commands.registerCommand(
+		'virtualbox-extension.runVM',
+		async (vmTreeItem?: VirtualMachineTreeItem) => {
+			if (vmTreeItem) {
+				const { vm } = vmTreeItem;
+				const running = await isRunning(vm.id);
+
+				if (!running) {
+					try {
+						await startWithGui(vm.id);
+						vscode.window.showInformationMessage(
+							`Virtual machine "${vm.name}" has been run successfully`
+						);
+					} catch (ex) {
+						vscode.window.showErrorMessage(
+							`Cannot run virtual machine "${vm.name}": ${(ex && ex.message) || 'Unknown error'}`
+						);
+					}
+				}
+
+				vmProvider.refresh();
+			}
+		}
+	),
+	vscode.commands.registerCommand(
+		'virtualbox-extension.saveStateVM',
+		async (vmTreeItem: VirtualMachineTreeItem) => {
+			if (vmTreeItem) {
+				const { vm } = vmTreeItem;
+
+				const running = await isRunning(vm.id);
+				if (running) {
+					try {
+						await saveState(vm.id);
+						vscode.window.showInformationMessage(
+							`Virtual machine "${vm.name}" has been stopped successfully`
+						);
+					} catch (ex) {
+						vscode.window.showErrorMessage(
+							`Cannot stop virtual machine "${vm.name}": ${(ex && ex.message) || 'Unknown error'}`
+						);
+					}
+				}
+				vmProvider.refresh();
+			}
+		}
+	)
+);
+```
+
+Здесь нам и пригодились утилитные методы, объявленные в файле `utils.ts`.
+Конечный вариант файла `extension.ts` вы можете найти в [репозитории](https://github.com/acherkashin/virtualbox-vscode-extension/blob/master/src/extension.ts):
+
+Теперь, когда всё готово, давайте запустим наш extension:
+
+<p class="vm-images">
+    <img class="vm-images__image" src="/assets/virtualbox-vscode-extension/running-vm.gif" alt="Запуск виртуальной машины"/>
+    <img class="vm-images__image" src="/assets/virtualbox-vscode-extension/stopping-vm.gif" alt="Выключение виртуальной машины"/>
+</p>
+
+## Публикация
+
+Теперь, когда наше приложение готово, мы можем его опубликовать. Подробнее с процессом публикации вы можете познакомиться в [официальной документации](https://code.visualstudio.com/api/working-with-extensions/publishing-extension). А я расскажу об этом вкратце.
+
+Устанавливаем [vsce](https://github.com/microsoft/vscode-vsce) (Visual Studio Code Extension Manager)
+
+```bash
+npm install -g vsce
+```
+
+[Получаем Personal Access Token](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#get-a-personal-access-token). Не забудьте скопировать PAT сразу после создания, иначе он будет утерян, так как Microsoft не хранит PAT.
+
+Убеждаемся, что в `package.json` заполнены следующие поля (Но значения нужно указать ваши, а не мои 😜).
+
+```json
+"name": "virtualbox-extension",
+"displayName": "VirtualBox",
+"description": "Extension allows to manage your VMs right from Visual Studio Code",
+"publisher": "acherkashin",
+"icon": "images/virtualbox-extension-icon.png",
+"repository": {
+    "url": "https://github.com/acherkashin/virtualbox-vscode-extension"
+},
+```
+
+Особое внимание необходимо обратить на поле `publisher`, оно нам пригодится в следующем шаге.
+
+Создаем `publisher` с тем же именем, которое указано, в `package.json`. Как только, вы получили [Personal Access Token](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#get-a-personal-access-token), вы можете создать `publisher` используя `vsce`:
+
+```bash
+vsce create-publisher (publisher name)
+```
+
+Публикуем расширение с помощью следующей команды:
+
+```bash
+vsce publish -p (access token)
+```
+
+Всё готово. На этом наш путь завершен!
+
+## Итоги
+
+Давайте ненадолго остановимся и подведем итог. Мы разобрались:
+
+- Как сгенерировать VS Code extension;
+- Как управлять VirtualBox, с помощью пакета [node-virtualbox](https://github.com/Node-Virtualization/node-virtualbox);
+- Как отображать информацию в виде дерева с помощью `TreeDataProvider`;
+- Что такое _Команды_ и как ими пользоваться;
+- Как происходит публикация extension в Marketplace.
+
+Также рекомендую почитать официальную документацию [VS Code Extension API](https://code.visualstudio.com/api). И [репозиторий с примерами расширений](https://github.com/microsoft/vscode-extension-samples), где достаточно наглядно продемонстрированы все их возможности.
