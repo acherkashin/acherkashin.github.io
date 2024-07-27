@@ -73,7 +73,7 @@ button:focus {
 
 <div class="centering">
 
-![Карта навигации Яндекса](/assets/keyboard-accessibility/yandex-keyboard-order.gif)
+![Карта навигации Яндекса](/public/keyboard-navigation/yandex-keyboard-order.gif)
 
 </div>
 
@@ -106,15 +106,15 @@ button:focus {
 
 - Подсказки в тултипах в [VsCode](https://code.visualstudio.com/)
 
-![Тултипы в VsCode](/assets/keyboard-accessibility/vscode-tooltip.gif)
+![Тултипы в VsCode](/public/keyboard-navigation/vscode-tooltip.gif)
 
 - Подсказка в правой части поля поиска на [GitHub](https://github.com/), для фокусировки необходимо нажать <span class="key">/</span>
 
-![Поле поиска на github, для фокусировки необходимо нажать "/"](/assets/keyboard-accessibility/github-searchbox.png)
+![Поле поиска на github, для фокусировки необходимо нажать "/"](/public/keyboard-navigation/github-searchbox.png)
 
 - Подсказка в placeholder'е на сайте библиотеки [Vuetify](https://vuetifyjs.com/en/), для фокусировки необходимо нажать <span class="key">/</span>
 
-![Поле поиска на vuetifyjs, для фокусировки необходимо нажать "/"](/assets/keyboard-accessibility/vuetifyjs-searchbox.png)
+![Поле поиска на vuetifyjs, для фокусировки необходимо нажать "/"](/public/keyboard-navigation/vuetifyjs-searchbox.png)
 
 ## Все ли можно сделать доступным с клавиатуры?
 
