@@ -248,7 +248,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 Давайте наконец-то запустим наш extension:
 
-![Список виртуальных машин](/assets/virtualbox-vscode-extension/vms-list.png)
+![Список виртуальных машин](/public/virtualbox-vscode-extension/vms-list.png)
 
 Отлично! Идём дальше! 🎉🎉🎉
 
@@ -368,10 +368,8 @@ context.subscriptions.push(
 
 Теперь, когда всё готово, давайте запустим наш extension:
 
-<p class="vm-images">
-    <img class="vm-images__image" src="/assets/virtualbox-vscode-extension/running-vm.gif" alt="Запуск виртуальной машины"/>
-    <img class="vm-images__image" src="/assets/virtualbox-vscode-extension/stopping-vm.gif" alt="Выключение виртуальной машины"/>
-</p>
+![Запуск виртуальной машины](/public/virtualbox-vscode-extension/running-vm.gif)
+![Выключение виртуальной машины](/public/virtualbox-vscode-extension/stopping-vm.gif)
 
 ## Публикация
 
