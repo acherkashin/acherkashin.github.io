@@ -16,7 +16,7 @@ tags: ['csharp', '.net', 'scripts']
 
 <div class="centering">
 
-![Repl meme](/assets/repl/repl-meme.png)
+![Repl meme](/public/csharp-repl/repl-meme.png)
 
 </div>
 
@@ -24,7 +24,7 @@ REPL или "read-eval-print loop" - это интерактивная сред�
 
 <div class="centering">
 
-![Repl example](/assets/repl/repl-example.gif)
+![Repl example](/public/csharp-repl/repl-example.gif)
 
 </div>
 
@@ -65,7 +65,7 @@ class Program
 
 <div class="centering">
 
-![C# Interactive Path](/assets/repl/csharp-interactive-path.png)
+![C# Interactive Path](/public/csharp-repl/csharp-interactive-path.png)
 
 </div>
 
@@ -73,7 +73,7 @@ class Program
 
 <div class="centering">
 
-![List concat example](/assets/repl/list-concat-example.gif)
+![List concat example](/public/csharp-repl/list-concat-example.gif)
 
 </div>
 
@@ -89,7 +89,7 @@ class Program
 
 <div class="centering">
 
-![Octokit usage](/assets/repl/Octokit-usage.png)
+![Octokit usage](/public/csharp-repl/Octokit-usage.png)
 
 </div>
 
@@ -97,7 +97,7 @@ class Program
 
 <div class="centering">
 
-![Usage csi util](/assets/repl/csi-util.png)
+![Usage csi util](/public/csharp-repl/csi-util.png)
 
 </div>
 
@@ -116,7 +116,7 @@ C# Interactive является не единственным REPL окруже�
 
 <div class="centering">
 
-![DotNet Script](/assets/repl/dotnet-script-ubuntu.png)
+![DotNet Script](/public/csharp-repl/dotnet-script-ubuntu.png)
 
 </div>
 
@@ -128,7 +128,7 @@ DotNet Script использует .net core и поэтому является 
 
 <div class="centering">
 
-![Инициализация проекта DotNet Script](/assets/repl/dotnet-script-init.png)
+![Инициализация проекта DotNet Script](/public/csharp-repl/dotnet-script-init.png)
 
 </div>
 
@@ -156,7 +156,7 @@ foreach(var q in lastPR) {
 
 <div class="centering">
 
-![IntelliSence в Vs Code](/assets/repl/vscode-intellisense.png)
+![IntelliSence в Vs Code](/public/csharp-repl/vscode-intellisense.png)
 
 </div>
 
@@ -166,7 +166,7 @@ foreach(var q in lastPR) {
 
 <div class="centering">
 
-![Отладка main.csx файла в Visual Studio Code](/assets/repl/debugging.png)
+![Отладка main.csx файла в Visual Studio Code](/public/csharp-repl/debugging.png)
 
 </div>
 
