@@ -7,7 +7,7 @@
     "body": [
       "---",
       "layout: ../../layouts/post.astro",
-      "title: Article titile",
+      "title: Article title",
       "pubDate: '2018-06-19 12: 00: 00 +0300'",
       "excerpt: ",
       "description: 'SEO description'",
@@ -19,4 +19,9 @@
     ],
     "description": "Creates parameters for article"
   },
+  "figure": {
+    "scope": "markdown",
+    "prefix": "image",
+    "body": "<TitledImage src=\"${1}\" alt=\"${2}\"/>",
+  }
 }
