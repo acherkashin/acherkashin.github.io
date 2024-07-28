@@ -1,7 +1,7 @@
 ---
 layout: ../../layouts/post.astro
 title: C# Interactive - REPL
-pubDate: 2020-09-26 12:00:00 +0300
+pubDate: 2020-09-26
 excerpt: Несколько лет назад, я заметил, что в Visual Studio появилась новая окошко "C# Interactive". Eщё тогда я стал догадываться, что это REPL, однако только недавно решил разобраться, что оно из себя представляет и в каких случаях может быть полезно. Прежде чем мы перейдём, к "С# Interactive" давайте кратко обсудим, что же такое REPL.
 description: 'SEO description'
 image:

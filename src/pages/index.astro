@@ -4,11 +4,12 @@ import Base from '@/layouts/Base.astro';
 import Hero from '@/components/Hero.astro';
 import LatestPosts from '@/components/LatestPosts.astro';
 import { sortPostsByDate } from '@/utils/data.util';
+import { MarkdownInstance, MDXInstance } from 'astro/dist/@types/astro';
 
 const { title } = AppConfig;
 const { description } = AppConfig;
 
-const allPosts = await Astro.glob('./posts/*.md');
+const allPosts = await Astro.glob<MDXInstance<any> | MarkdownInstance<any>>('./posts/*.(md|mdx)');
 allPosts.sort(sortPostsByDate);
 const latestPosts = allPosts.slice(0, 3);
 ---

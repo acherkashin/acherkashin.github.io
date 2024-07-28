@@ -1,10 +1,10 @@
 ---
-import { MarkdownInstance } from 'astro/dist/@types/astro';
+import { MarkdownInstance, MDXInstance } from 'astro/dist/@types/astro';
 import Section from './Section.astro';
 import Card from './Card.astro';
 
 interface Props {
-	posts: MarkdownInstance<any>[];
+	posts: (MarkdownInstance<any> | MDXInstance<any>)[];
 }
 
 const { posts } = Astro.props;
@@ -12,8 +12,8 @@ const { posts } = Astro.props;
 
 <Section>
 	<div class="flex justify-between pb-4">
-		<p class="text-xl font-bold">Latest Posts</p>
-		<a href="/posts" class="underline hover:text-orange-600">all posts →</a>
+		<p class="text-xl font-bold">Последние статьи</p>
+		<a href="/posts" class="underline hover:text-orange-600">Все статьи →</a>
 	</div>
 	<div class="flex flex-col pb-4 md:flex-row">
 		{

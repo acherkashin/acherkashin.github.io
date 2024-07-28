@@ -1,7 +1,7 @@
 ---
 layout: ../../layouts/post.astro
 title: Сравнение C# и JavaScript. Основы
-pubDate: 2018-06-19 12:00:00 +0300
+pubDate: 2018-06-19
 excerpt: 
 description: 'SEO description'
 image:
