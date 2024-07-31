@@ -2,13 +2,13 @@
   // Option + ESC to activate suggestions if you don't see it automatically
   // https://stackoverflow.com/questions/32703317/how-to-activate-markdown-user-snippets-in-visual-studio-code
   "Article parameters": {
-    "scope": "markdown",
+    "scope": "markdown,mdx",
     "prefix": "params",
     "body": [
       "---",
       "layout: ../../layouts/post.astro",
       "title: Article title",
-      "pubDate: '2018-06-19 12: 00: 00 +0300'",
+      "pubDate: '2018-06-19'",
       "excerpt: ",
       "description: 'SEO description'",
       "image:",
@@ -20,8 +20,8 @@
     "description": "Creates parameters for article"
   },
   "figure": {
-    "scope": "markdown",
+    "scope": "markdown,mdx",
     "prefix": "image",
-    "body": "<TitledImage src=\"${1}\" alt=\"${2}\"/>",
+    "body": "<TitledImage src=\"/public/${TM_FILENAME_BASE}/${1:image.png}\" alt=\"${2}\"/>",
   }
 }
