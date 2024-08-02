@@ -1,0 +1,342 @@
+---
+layout: ../../layouts/post.astro
+title: Как автоматизировать использование дизайн токенов с помощью Stylelint и PostCSS
+pubDate: '2023-12-12'
+excerpt: 'Сегодня я хотел бы поделиться своим небольшим успехом в автоматизации. В какой-то момент я понял, что во время код ревью я указываю разработчикам на одни и те же ошибки. Но, что ещё хуже, я сам время от времени допускаю эти ошибки. Сегодня хочу рассказать об одной из таких проблем, которую я решил с помощью PostCSS + Stylelint, и о том, как я это сделал.
+
+Статья будет полезна для разработчиков, которые уже используют или собираются использовать дизайн токены.'
+description: 'Сегодня я хотел бы поделиться своим небольшим успехом в автоматизации. В какой-то момент я понял, что во время код ревью я указываю разработчикам на одни и те же ошибки. Но, что ещё хуже, я сам время от времени допускаю эти ошибки. Сегодня хочу рассказать об одной из таких проблем, которую я решил с помощью PostCSS + Stylelint, и о том, как я это сделал.
+
+Статья будет полезна для разработчиков, которые уже используют или собираются использовать дизайн токены.'
+image:
+  src:
+  alt:
+tags: []
+---
+
+import TitledImage from '../../components/TitledImage.astro';
+
+Сегодня я хотел бы поделиться своим небольшим успехом в автоматизации. В какой-то момент я понял, что во время код ревью указываю разработчикам на одни и те же ошибки. Но, что ещё хуже, я сам время от времени допускаю эти ошибки. Сегодня расскажу об одной из таких проблем, которую я решил с помощью PostCSS + Stylelint, и о том, как я это сделал.
+
+Статья будет полезна для разработчиков, которые уже используют или собираются использовать дизайн токены.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image1.png" alt=""/>
+
+“Автоматизируй всё, что можешь автоматизировать”. Я уже не помню, где услышал эту фразу, но теперь она меня повсюду преследует и не даёт спокойно спать по ночам. Бесит вся рутина, и хочется, чтобы инструменты делали всю работу за меня.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image2.png" alt=""/>
+
+До этого я автоматизировал:
+
+* [Именование файлов и папок с помощью плагина eslint-plugin-import](https://t.me/cherkashindev/110)
+* [Контроль импортов с помощью плагина import/no-restricted-paths](https://t.me/cherkashindev/92)
+* [Использование именованных импортов в JS](https://t.me/cherkashindev/109)
+
+С автоматизацией использования дизайн токенов всё немного сложнее, и в пост не поместится, поэтому я решил написать статью.
+
+Наш продукт является self-hosted решением, которое компании могут разворачивать самостоятельно на своих серверах, ну что-то типа на self-hosted гитлаба. Несколько лет назад, мы с командой подумали и решили, что пользователям было бы полезно, брендировать внешний вид нашего продукта.
+
+Мы реализовали простенький UI, а наш дизайнер сел за чашечкой тёмного ~~нефильтрованного~~ кофе и унифицировал цвета, типографику и иконки. Для каждого свойства мы создали CSS переменные и, положа руку на сердце, поклялись больше не хардкодить эти значения. Все эти переменные называются дизайн-токенами и являются самыми маленькими, атомарными правилами дизайн системы.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image3.png" alt=""/>
+
+Но время от времени, к сожалению, мы нарушаем нашу клятву. Иногда, мы не глядя копируем стили из фигмы, думаем, что исправим перед мёржем изменений и забываем, а новые разработчики и вовсе не в курсе, что нужно использовать дизайн-токены. А потом приходят клиенты и жалуются, что в каком-то месте не могут изменить цвет или шрифт. Поэтому я решил посмотреть, что можно с этим сделать и как это автоматизировать.
+
+ℹ️ **Важное замечание:** в статье мы не будем говорить о том, как правильно именовать дизайн токены, это отдельная большая тема. Я выбрал самый простой вариант именования в качестве примера, и для боевого проекта он не подойдёт. Если хотите разобраться как именовать и использовать дизайн токены, вот несколько статей:
+
+* [Что такое дизайн-токены простыми словами](https://habr.com/ru/companies/domclick/articles/775066/#:~:text=%D0%9F%D1%80%D0%B8%D0%BD%D1%86%D0%B8%D0%BF%D1%8B%20%D0%BD%D0%B0%D0%B8%D0%BC%D0%B5%D0%BD%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B9)
+* [Дизайн токены: как они могут помочь вам сэкономить время и деньги](https://vc.ru/design/805225-dizayn-tokeny-kak-oni-mogut-pomoch-vam-sekonomit-vremya-i-dengi#:~:text=%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD%20Variable%20Convertor-,%D0%9A%D0%BE%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%D0%BE%D0%B2,-%D0%94%D0%BB%D1%8F%20%D0%BD%D0%B0%D0%B7%D0%B2%D0%B0%D0%BD%D0%B8%D0%B8%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%D0%BE%D0%B2)
+* [Atlassian Design System: How to read design token names](https://atlassian.design/tokens/design-tokens/#how-to-read-design-token-names)
+
+Если вам, как и мне нравится фронтенд и автоматизация — то давайте начнём. Обозначим проблему и как хотим её решить:
+
+* **Проблема:** использование значений напрямую в коде, вместо дизайн токенов
+* **Решение:** добавить линтер, который будет уведомлять нас об упомянутых проблемах
+* **Идеально:** линтер сам заменяет все значения на переменные
+
+Все исходники можно найти [здесь](https://github.com/acherkashin/design-tokens-demo).
+
+
+## Подключение плагина stylelint-declaration-strict-value
+
+Для демо я буду использовать [vite шаблон для реакта на тайпскрипте](https://vitejs.dev/guide/#scaffolding-your-first-vite-project)
+
+```
+pnpm create vite design-tokens-demo --template react-ts
+```
+
+Теперь нужно установить [stylelint](https://stylelint.io/user-guide/get-started/) и товарища, из-за которого мы сегодня, собственно, собрались — плагин [stylelint-declaration-strict-value](https://github.com/AndyOGo/stylelint-declaration-strict-value).
+
+```
+pnpm install -D stylelint stylelint-declaration-strict-value
+```
+
+Именно этот плагин решает нашу проблему — он будет оповещать нас, если мы вдруг где-то не используем переменные, а жёстко задали значение.
+
+Конечно, просто подключить плагин не достаточно, нам нужно также ему объяснить, какие свойства он должен валидировать, в нашем случае это:
+
+* color
+* background-color
+* font-size
+* font-weight
+* font-family
+* filter
+
+Но как всегда существуют исключения, линтер не всегда должен ругаться, когда мы используем жёстко заданные значения. Например, мы хотим позволить использовать: `'currentColor', 'unset', 'inherit', 'initial', 'transparent'`, потому что создание переменных для этих значений лишено всякого смысла.
+
+Конфигурация будет выглядеть так:
+
+```js
+// .stylelintrc.cjs
+module.exports = {
+  plugins: ['stylelint-declaration-strict-value'],
+  files: ['**/*.css'],
+  rules: {
+    'scale-unlimited/declaration-strict-value': [
+      ['color', 'background-color', 'font-size', 'font-weight', 'font-family', 'filter'],
+      {
+        ignoreValues: ['currentColor', 'unset', 'inherit', 'initial', 'transparent'],
+      },
+    ],
+  },
+};
+```
+
+Теперь давайте запустим команду `pnpx stylelint "**/*.css"` и проверим, что линтер работает.
+
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image4.png" alt="Stylelint нашёл 16 ошибок в коде"/>
+
+Консоль это, конечно, хорошо, но всем нам нравится видеть ошибки прямо в редакторе кода. Если вы, как и я используете VS Code — установите[плагин для StyleLint](https://marketplace.visualstudio.com/items?itemName=stylelint.vscode-stylelint)
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image5.png" alt="Плагин для Stylelint подсвечивает ошибки в коде"/>
+
+Можно было бы сказать, что всё готово, мы добавили литер — расходимся, но нет, давайте автоматизируем это безобразие.
+
+
+## Автоматизация использования переменных
+
+Прежде чем что-то автоматизировать, нам нужно создать дизайн токены, которые мы в итоге будем использовать в наших стилях. Для этого создадим файл _variables.css_ и для начала создадим переменные для насыщенности шрифта.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image6.png" alt="Генерацию токенов тоже можно автоматизировать"/>
+
+Теперь нам нужно научиться заменять значения на созданные токены. К счастью, мы можем передать в конфигурацию плагина функцию [autoFixFunc](https://github.com/AndyOGo/stylelint-declaration-strict-value#autofix-support), которая будет вызываться, когда styleling запущен с опцией `--fix`.
+
+```js
+function autoFixFunc(node, validation, root, config) {
+  const { value, prop } = node;
+
+  if (prop === 'font-weight') {
+    switch (value) {
+      case '300':
+        return 'var(--font-weight-light)';
+      case '400':
+        return 'var(--font-weight-normal)';
+      case '500':
+        return 'var(--font-weight-medium)';
+      case '600':
+        return 'var(--font-weight-semi-bold)';
+      case '700':
+        return 'var(--font-weight-bold)';
+      default:
+        throw new Error(`Property ${prop} with value ${value} can't be autofixed!`)
+    }
+  }
+}
+```
+
+Теперь добавим скрипт в `package.json` для автоматического исправления ошибок и запустим его.
+
+```
+"lint:css": "pnpx stylelint --fix \"**/*.css\""
+```
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image7.png" alt="Значения font-weight заменены на соответствующие переменные"/>
+
+Тут вы должны воскликнуть, что я вас обманул и вообще посмотри на эту функцию, поддерживать такое вручную невозможно. Немного терпения, в ход вступает postcss.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image8.png" alt=""/>
+
+Если присмотреться к реализации функции автозамены, то легко заметить, что её задача очень простая — заменить найденное значение на переменную, с точно таким же значением.
+
+То есть, когда плагин запускает функцию `autoFixFunc` мы должны найти соответствующую переменную в файле `variables.css` и вернуть эту переменную из функции. Элементарно, но есть небольшая загвоздка, JavaScript не разговаривает на языке CSS, поэтому нашим переводчиком будет PostCSS — установим его `pnpm install -D postcss`.
+
+PostCSS позволяет писать плагины, с помощью которых можно работать со стилями из JavaScript. Мы напишем простой плагин для конвертации CSS переменных в JSON.
+
+```js
+// scripts/styles.js
+
+// scripts/styles.js
+import fs from 'fs';
+import path from 'path';
+import postcss from 'postcss';
+
+// Считываем файл с css-переменными
+const tokensPath = path.resolve('src/variables.css');
+const cssContent = fs.readFileSync(tokensPath, 'utf-8');
+
+const variables = {};
+
+const plugin = {
+  postcssPlugin: 'css-to-json',
+  // Once вызываетс один раз для каждого файла - root
+  Once(root) {
+    // Обходим весь CSS файл и записываем переменные в объект variables
+    root.walkDecls(variable => {
+      if (variable.variable) {
+        variables[variable.prop] = variable.value;
+      }
+    });
+
+    const jsObject = JSON.stringify(variables, null, 2);
+    console.log(jsObject);
+    
+    // Записываем все найденные переменные в json файл
+    fs.writeFileSync('variables.json', jsObject, 'utf-8');
+  }
+};
+
+postcss([plugin])
+  .process(cssContent, { from: tokensPath })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+```
+
+Теперь, когда мы запустим этот скрипт, он создаст вот такой `variables.json` файл.
+
+```json
+// variables.json
+{
+  "--font-weight-light": "300",
+  "--font-weight-normal": "400",
+  "--font-weight-medium": "500",
+  "--font-weight-semi-bold": "600",
+  "--font-weight-bold": "700"
+}
+```
+
+Остаётся только использовать этот файл внутри функции `autoFixFunc`.
+
+```js
+const variables = require('./variables');
+
+function autoFixFunc(node, validation, root, config) {
+  const { value, prop } = node;
+
+  const key = Object.keys(variables).find(name => {
+    // case insensitive value comparison
+    return variables[name].toLowerCase() == value.toLowerCase();
+  });
+  const variable = `var(${key})`;
+  if (key) {
+    console.log(`Replaced: ${value} => ${variable}`);
+    return variable;
+  }
+}
+```
+
+Теперь каждый раз, прежде чем запускать `npx stylelint --fix \"**/*.css\"`, нужно заново сгенерировать файл `variables.css`, поэтому давайте обновим скрипт `lint:css`.
+
+```
+"lint:css": "node scripts/styles.js && pnpx stylelint --fix \"**/*.css\"",
+```
+
+С насыщенностью шрифта всё хорошо, теперь давайте создадим дизайн токены для цветов и добавим их в `variables.css`.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image9.png" alt="Такие названия переменных подойдут лишь для демо-проекта, в боевых проектах используйте семантические названия токенов"/>
+
+Далее запустим `pnpm run lint:css` и вуаля, теперь все свойства используют css переменные, ну почти.
+
+
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image10.png" alt="Авто-замена жёстко заданных цветов на дизайн-токены"/>
+
+Хочется закричать “Виват!” и сказать, что всё готово, но рано. Если присмотреться — цвет, который задан с помощью `rgba`, не заменился, хотя мы создали для него переменную `white-opacity`.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image11.png" alt="Цвет rgba(255, 255, 255, 0.87) не заменился на переменную"/>
+
+Это можно решить настройкой `ignoreFunctions` плагина, которой необходимо задать значение `false`, по-умолчанию все функции игнорируются.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image12.png" alt="Цвета заменился после использования изменения настройки `ignoreFunctions`"/>
+
+Но есть у плагина и ограничения — он не умеет заменять значения внутри функций. После того как мы добавили настройку `ignoreFunctions: false` stylelint ругается, что мы не используем переменные для свойств filter. К сожалению,[тут мы ничего поделать не можем](https://github.com/AndyOGo/stylelint-declaration-strict-value/issues/325#issuecomment-1799207362), и нам придётся вручную заменить значения на дизайн токены.
+
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image13.png" alt="Stylelint ругается, что мы не используем переменные для свойств filter"/>
+
+А чтобы stylelint перестал ругаться, нужно добавить регулярку `"/^drop-shadow/"` для `drop-shadow` в `ignoreValues`.
+
+```
+ignoreValues: ["/^drop-shadow/", 'currentColor', 'unset', 'inherit', 'initial', 'transparent'],
+```
+
+В общем и целом всю нашу проделанную работу можно отобразить с помощью вот такой схемы.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image14.png" alt="Схема работы описанного решения"/>
+
+## Автоматизируем запуск линтера
+
+Вроде всё хорошо, но мы же не хотим запускать этот скрипт всё время вручную, верно? Если уж автоматизировать, то автоматизировать до конца, чтобы переменные заменялись по мере написания кода. В этом нам поможет [vite-plugin-stylelint](https://github.com/ModyQyW/vite-plugin-stylelint):
+
+```shell
+pnpm install -D vite-plugin-stylelint
+```
+
+Также добавим `stylelint({ fix: true })` в `vite.config.ts`
+
+```js
+// vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import stylelint from 'vite-plugin-stylelint';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    stylelint({
+      fix: true,
+    })
+  ],
+})
+```
+
+Теперь, когда мы запустим дев сервер `pnpm run dev`, замена значений на дизайн токены будет происходить автоматически (если автозамена не срабатывает — значит вам просто нужно открыть ваше приложение в браузере).
+
+
+## Что можно улучшить?
+
+Конечно, это решение не идеально и есть как минимум 2 проблемы, с которыми вы можете столкнуться
+
+
+### Семантика
+
+Самое главное ограничение решения — этот подход совсем ничего не знает о семантике. Он может подхватить не те переменные и, например, применить border-radius от кнопки к чекбоксу.
+
+Допустим, что у нас уже есть кнопка и теперь нам нужно реализовать чекбокс, и сейчас у него такое же значение скругления углов (border-radius) как и у кнопки. В таком случае, может произойти неприятная ситуация, и наше решение автоматически применит токен от кнопки для чекбокса.
+
+В этом нет ничего страшного до тех пор, пока мы не решили сильнее скруглить края для кнопки, и чекбокс не стал похож на радио кнопку. Поэтому важно доработать решение, чтобы таких конфузов не возникало. Но тут сложно предложить какое-то универсальное решение, которое подойдёт для любого проекта.
+
+<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image15.png" alt="Изменение радиуса кнопки приводит к изменению чекбокса"/>
+
+### Формат значений
+
+В нашем примере есть токен `white` со значением `#ffffff`, но если в коде мы будем использовать другие форматы белого цвета: `#fff`, `rgb(255, 255, 255)` или `hsl(0, 0%, 100%)` — то ничего не получится, ведь мы используем простое сравнение строк.
+
+Аналогично с насыщенностью — значение `bold` не будет заменено на `var(-font-weight-bold)`, потому что текущее решение не умеет сравнивать `700` и `bold`. С размером шрифта тоже самое.
+
+Если вам необходимо — вы можете решить эту проблему самостоятельно. Для `font-weight` довольно просто написать функцию конвертации, а для сравнения цветов можно использовать библиотеку [color](https://www.npmjs.com/package/color).
+
+
+### Заключение
+
+Конечно подобная автоматизация не решила все проблемы, но можно точно сказать, что она позволяет сэкономить время. Теперь я банально стал меньше обращать внимание на дизайн токены во время код ревью, и у меня появилась лишняя минутка выпить чаю (как будто до этого у меня не было на это времени).
+
+Будет классно, если вы поделитесь решениями, которыми пользуетесь в своих проектах или как живёте без них.
+
+Спасибо, что дочитали статью, надеюсь вы узнали для себя что-то новое. Если вам понравилось — можете поставить звёздочку [репозиторию с демо-проектом](https://github.com/acherkashin/design-tokens-demo) или подписаться на мой [телеграмм канал](https://t.me/cherkashindev), где я рассказываю о разработке, вам мелочь а мне приятно.
+
+---
+
+Я собираюсь написать ещё одну статью об отображении дизайн токенов в storybook, если тема интересна можете подписаться на меня на хабре или в[телеграмме](https://t.me/cherkashindev), чтобы не пропустить.
+
