@@ -1,0 +1,546 @@
+---
+layout: ../../layouts/post.astro
+title: Интегрируем Яндекс Музыку в Visual Studio Code
+pubDate: '2023-04-02'
+excerpt: 
+description: 'SEO description'
+image:
+  src:
+  alt:
+tags: []
+---
+
+import TitledImage from '../../components/TitledImage.astro';
+
+Представьте, что вы можете слушать свои любимые песни на Яндекс.Музыке, прямо из своего любимого редактора кода, не переключаясь между приложениями. Это уже не мечта, а реальность! В этой статье мы рассмотрим, как интегрировать Яндекс.Музыку в Visual Studio Code и наслаждаться любимой музыкой прямо во время работы.
+
+## Обзор расширения
+
+Перед тем перейти к описанию реализации давайте краем глаза взглянем на [само расширение](https://marketplace.visualstudio.com/items?itemName=acherkashin.yandex-music-extension) и его возможности.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image1.png" alt="Описание возможностей расширения"/>
+
+Я думаю, легко заметить, что левая панель по большому счёту просто повторяет реализацию главной страницы Яндекс Музыки. Здесь вам:
+
+* и персональные плейлисты
+* и ваши любимые песни и подкасты
+* и рекомендации
+* и поиск
+
+Подборки пока отсутствуют, но со временем и они должны появиться (если не хватает ещё чего-то — [дайте знать](https://github.com/acherkashin/yandex-music-extension/issues/new) ?).
+
+<TitledImage src="/public/yandex-music-integration-vscode/image2.png" alt=""/>
+
+Конечно же, расширение — лишь урезанная версия Я.Музыки, поэтому вы можете быстро перейти к нужному треку, альбому или плейлисту с помощью кнопки “Открыть в браузере”.
+
+Не буду углубляться в детали, это всё-таки разбор реализации, а не демо. Если интересно поближе посмотреть на расширение —[ можете просто установить его](https://marketplace.visualstudio.com/items?itemName=acherkashin.yandex-music-extension).
+
+<details>
+    <summary>Как авторизоваться в расширении</summary>
+    <p>
+Есть два способа авторизоваться в расширении:
+
+* По токену
+* По логину и паролю
+
+
+<TitledImage src="/public/yandex-music-integration-vscode/image3.png" alt="Способы авторизации в расширении"/>
+
+Почему так? Яндекс постепенно уходит от авторизации по логину и паролю, ведь способ не очень безопасный, и всё меньше и меньше пользователей могут использовать данный способ. Если вы уверены, что ввели корректные данные, но всё равно видите данную ошибку, то вам стоит использовать второй вариант — вход с помощью токена.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image4.png" alt="Ошибка, если для вашего аккаунта не работает авторизация по логину и паролю"/>
+
+Существует 3 способа получить токен:
+
+1. С помощью расширения
+    1. [Для Google Chrome](https://chrome.google.com/webstore/detail/yandex-music-token/lcbjeookjibfhjjopieifgjnhlegmkib)
+    2. [Для Firefox](https://addons.mozilla.org/en-US/firefox/addon/yandex-music-token/)
+2. С помощью[ Android приложения](https://github.com/MarshalX/yandex-music-token/tree/main/android-app). Оно использует официальный SDK Яндекса для андроида.
+3. [Вручную](https://github.com/MarshalX/yandex-music-api/discussions/513#discussioncomment-2729781), скопировав токен из адресной строки, во время редиректа на страницу Я.Музыки.
+
+Оба браузерных расширения используют последний способ и просто перехватывают токен во время редиректа, поэтому вам нужно уже быть авторизованным в Яндекс.Музыке. Исходники всех способов собраны[ здесь в репозитории](https://github.com/MarshalX/yandex-music-token) ([спасибо Илье](https://t.me/MarshalX), что всё это дело собрал вместе).
+
+Самый простой способ —[ расширение для Хрома](https://chrome.google.com/webstore/detail/yandex-music-token/lcbjeookjibfhjjopieifgjnhlegmkib), установите его и нажмите на кнопку “Скопировать токен”.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image5.png" alt="Расширение для Хрома, для получения токена"/>
+    </p>
+</details>
+
+
+Теперь самое время взглянуть под капот. Реализация расширения будет состоять из 3-х частей:
+
+* Работа с API Яндекс Музыки
+* Разработка VS Code расширения, отображающее треки и плейлисты
+* Воспроизведение треков с помощью Electron
+
+
+## API Яндекс Музыки
+
+Я думаю будет логично начать рассказ с базовой вещи, без которой это расширение не увидело бы свет — с API. Подробностей уже не помню, но мне кажется дело было так:
+
+* Погуглил, есть ли у Я.Музыки официальное API
+* [Официального API нет](https://github.com/yandex/audio-js/issues/4), нашёл[ неофициальное API](https://github.com/itsmepetrov/yandex-music-api)
+* К сожалению, библиотека заброшена, к тому же в ней отсутствуют нужные мне методы
+* Натыкаюсь на статью “[Как я библиотеку для сервиса «Яндекс.Музыка» писал”](https://habr.com/ru/post/462607/) и на библиотеку[ на питоне](https://github.com/MarshalX/yandex-music-api) (Илья, если ты читаешь статью — Спасибо тебе, я не забыл про тебя!).
+* Начинаю самостоятельно писать клиент Яндекс.Музыки внутри расширения. Использую также как указано в статье[ HTTP Analyzer](https://www.ieinspector.com/httpanalyzer/) и виндовое приложение Яндекс Музыки.
+* Вручную пишу[ OpenAPI схему](https://github.com/acherkashin/yandex-music-open-api)
+* Генерирую[ JavaScript-клиент yandex-music-client на основе OpenAPI схемы](https://t.me/cherkashindev/75)
+
+Работа над генерацией клиента всё ещё продолжается, и когда появится первая более-менее стабильная версия — я напишу отдельную статью.
+
+Теперь рассмотрим самые популярные методы.
+
+
+### Авторизация
+
+Первое, что необходимо сделать для использования большинства методов API — авторизация. Вы не сможете получить персональные плейлисты или же ваши любимые треки, если у вас нет токена.
+
+Если для вашего аккаунта всё ещё работает вход по логину и паролю — используйте метод `getToken` как показано ниже, иначе — скопируйте токен с помощью[ Google Chrome Extension](https://chrome.google.com/webstore/detail/yandex-music-token/lcbjeookjibfhjjopieifgjnhlegmkib).
+
+```ts
+import { getToken } from 'yandex-music-client/token';
+import { YandexMusicClient } from 'yandex-music-client/YandexMusicClient'
+
+// Получение токена работает не для всех пользователей
+// Универсальный способ получения токена через Google Chrome Extension:
+// https://chrome.google.com/webstore/detail/yandex-music-token/lcbjeookjibfhjjopieifgjnhlegmkib
+const token = await getToken('your email', 'your password');
+
+const client = new YandexMusicClient({
+    BASE: "https://api.music.yandex.net:443",
+    HEADERS: {
+        'Authorization': `OAuth ${config.token}`,
+    },
+});
+```
+
+### Плейлисты
+
+#### Персональные плейлисты
+
+Большинство плейлистов, которые вы видите на главной странице, можно получить с помощью метода `client.landing.getLandingBlocks` (GET `/landing3`)
+
+Есть разные типы лендинг блоков:
+
+* Например, чтобы получить плейлисты “плейлист дня”, “дежавю”, “премьера” и т.д. необходимо запросить блок типа _personalplaylists_ — `client.landing.getLandingBlocks("personalplaylists")`
+* Плейлист с новинками — нужно запрашивать блок _new-releases_
+* Чарт Я.Музыки — _chart_
+* Новые плейлисты — _new-playlists_
+* Подкасты — _podcasts_
+* Интересно сейчас — _promotions_
+
+Можно получить сразу несколько блоков, указав их через запятую:
+
+```js
+client.landing.getLandingBlocks(
+  "personalplaylists,promotions,new-releases,new-playlists,podcasts"
+)
+```
+
+Именно такой запрос отправляет официальное приложение Яндекс.Музыки.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image6.png" alt="Запрос, который отправляет приложение Я.Музыки для получения лендинг блоков"/>
+
+#### Плейлист “Мне нравится”
+
+Все понравившиеся треки нужно получать в 2 захода:
+
+1. Получить идентификаторы понравившихся треков — (GET `/users/{userId}/likes/tracks`)
+2. Получение треков по идентификаторам — (POST `/tracks`). Идентификаторы должны выглядеть как строка “&lt;trackId>:&lt;albumId>”.
+
+Код будет выглядеть вот так:
+
+```js
+const result = await client.tracks.getLikedTracksIds(userId);
+const ids = result.result.library.tracks.map(track => `${track.id}:${track.albumId}`);
+const tracks = await client.tracks.getTracks({ "track-ids": ids });
+```
+
+Почему нужно делать 2 запроса? Возможно за всё время использования вы налайкали несколько тысяч треков и загружать их все одним махом будет достаточно жирно. Правильнее будет делать пагинацию и загружать все треки постепенно.
+
+Стоит упомянуть ещё несколько методов:
+
+* Лайкнуть трек — `client.tracks.likeTracks` (POST `/users/{userId}/likes/tracks/add-multiple`)
+* Убрать лайк — `client.tracks.removeLikedTracks` (POST `/users/{userId}/likes/tracks/remove`)
+* Список треков с дизлайками — `client.tracks.getDislikedTracksIds` (GET `/users/{userId}/likes/tracks/remove`)
+
+
+#### Плейлисты пользователей
+
+Тут ничего интересного — просто перечислю существующие методы работы с плейлистами:
+
+* Создать плейлист — `client.playlists.createPlaylist` (POST `/users/{userId}/playlists/create`)
+* Переименовать плейлист — `client.playlists.renamePlaylist` (POST `/users/{userId}/playlists/{kind}/name`)
+* Удалить плейлист — `client.playlists.deletePlaylist` (POST `/users/{userId}/playlists/{kind}/delete`)
+* Добавить/удалить треки из плейлиста — `client.playlists.changePlaylistTracks` (POST `/users/{userId}/playlists/{kind}/change-relative`)
+* Получить все плейлисты пользователя — `client.playlists.getPlayLists` (GET `/users/{userId}/playlists/list`)
+* Получить плейлист по полю `kind` (такой идентификатор, уникальный внутри плейлистов пользователя, у других пользователей будут такие же айдишки) — `client.playlists.getPlaylistById(userId, playlistKind)` (GET `/users/{userId}/playlists/{kind}`)
+* Получить список плейлистов по `kind`, позволяет получить треки вместе с плейлистами, если передать `rich-tracks` как `true` — `client.playlists.getUserPlaylistsByIds` (GET `/users/{userId}/playlists`)
+* Получить плейлист по `kind` — `client.playlists.getPlaylistById` (GET `/users/{userId}/playlists/{kind}`)
+
+### Радио
+
+Методы работы с радио:
+
+* Получить информации о станции — `client.rotor.getStationInfo` (GET `/rotor/station/{stationId}/info`)
+* Получить треки для станции — `client.rotor.getStationTracks` (GET `/rotor/station/{stationId}/tracks`)
+* Получить списка радиостанций — `client.rotor.getStationsList` (GET `/rotor/stations/list`)
+* Получить рекомендации станций для текущего пользователя — `client.rotor.getRotorStationsDashboard` (GET `/rotor/stations/dashboard`)
+* Отправить фидбэк о событиях станции. Необходимо отправлять, когда включается радио и начинается/заканчивается/или пользователь пропускает трек — (GET `/rotor/station/{stationId}/feedback`)
+
+Если до этого, я просто перечислял запросы, то с радио всё сложнее. Тут мы остановимся поподробнее. Если мы включим HTTP Analyzer, и запустим радио в официальном виндовом приложении Я.Музыки (например “Моя волна” — `user:anyourwave`) мы получим вот такую портянку запросов.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image7.png" alt="Набор запросов при воспроизведении радио “Моя волна”"/>
+
+Всё выглядит гораздо проще, если нарисовать диаграмму. Стрелочки используются, чтобы показать как связаны между собой запросы, и как одни запросы используют в качестве параметров ответы других запросов.
+
+
+<TitledImage src="/public/yandex-music-integration-vscode/image8.png" alt="Схема воспроизведения радио"/>
+
+
+Если вдруг вы собираетесь создавать свой клиент для радио, то можно реализовать проигрывание без отправки фидбека, что упростит логику. Но мы[ тут уже обсуждали](https://t.me/yandex_music_api/31558) и пришли к выводу, что фидбек необходим для системы рекомендаций и чтобы избежать повтора треков в персональных плейлистах.
+
+В расширении пока реализовано только одно радио — Моя волна ([исходники тут](https://github.com/acherkashin/yandex-music-extension/blob/master/src/store.ts#L181)).
+
+<TitledImage src="/public/yandex-music-integration-vscode/image9.png" alt="Радио “Моя волна” в расширении для VS Code"/>
+
+
+### Очереди
+
+Один из самых частых вопросов в [чате по Яндекс.Музыке](https://t.me/yandex_music_api) — как получить трек, который играет в данный момент. Мы уже шутили, что нужно интегрировать чат GPT, чтобы он отвечал на данный вопрос, но к сожалению [он начал придумывать несуществующие методы](https://t.me/yandex_music_api/32053). Так вот — **получать текущий трек** нужно именно на основе очередей.
+
+
+#### Создание очереди
+
+Очереди создаются при любом воспроизведении плейлиста, альбома или радио. Например, вот так происходит воспроизведение альбома.
+
+1. Получаем альбом с треками `GET /albums/{albumId}/with-tracks`
+2. Создание очереди `POST /queue`, куда мы передаём все треки из плейлиста
+3. Выставляем номер текущего трека — `POST /queues/{queueId}/update-position?currentIndex=0`
+
+<TitledImage src="/public/yandex-music-integration-vscode/image10.png" alt="Запросы при воспроизведении альбома в официальном виндовом приложении Яндекс Музыки"/>
+
+
+Именно благодаря этому мы можем продолжить слушать трек на любом другом устройстве. Например, я включил альбом в официальном виндовом приложении
+
+<TitledImage src="/public/yandex-music-integration-vscode/image10.png" alt="Воспроизведение альбома"/>
+
+и теперь могу продолжить слушать трек из браузера или со своего мобильного.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image12.png" alt="Тот же самый альбом можно продолжить слушать"/>
+
+
+#### Получение текущего проигрываемого трека
+
+Чтобы получить текущий проигрываемый трек, достаточно нескольких шагов:
+
+* Получить список очередей — `client.queues.getQueues()` (GET /queues)
+* Получить `id` последней воспроизводимой очереди — первая в массиве полученном на прошлом шаге.
+* Запросить эту очередь — `client.queues.getQueueById()` (GET /queues/\{queueId\})
+* Получить текущий трек в очереди — `client.tracks.getTracks()` (GET /tracks/)
+
+Код целиком будет выглядеть вот так:
+
+```ts
+const { YandexMusicClient } = require('yandex-music-client');
+
+const client = new YandexMusicClient({
+    BASE: "https://api.music.yandex.net:443",
+    HEADERS: {
+        'Authorization': `OAuth <your_token>`,
+      },
+});
+
+client.queues
+    .getQueues('os=unknown; os_version=unknown; manufacturer=unknown; model=unknown; clid=; device_id=unknown; uuid=unknown')
+    .then(async ({result}) => {
+        // Последняя проигрываемая очередь всегда в начале списка
+        const currentQueue = await client.queues.getQueueById(result.queues[0].id);
+        const {tracks, currentIndex} = currentQueue.result;
+        const currentTrackId = tracks[currentIndex ?? 0];
+        
+        const currentTrack = (await client.tracks.getTracks({"track-ids": [`${currentTrackId.trackId}:${currentTrackId.albumId}`]})).result[0];
+
+        const supplement = await client.tracks.getTrackSupplement(currentTrack.id);
+
+        console.log(JSON.stringify(supplement.result.lyrics.fullLyrics, null, 2));
+    })
+```
+
+Хоть для радио и создаётся очередь — получить текущий трек не получится. В этой очереди нет треков, так как треки для радио генерируются динамически. Поэтому если вы продолжите слушать радио на другом устройстве, воспроизведение начнётся совсем с другого трека.
+
+
+### Скачивание трека
+
+Никому не было бы интересно API, если бы не могли скачивать музыку, ведь это самое главное.
+
+Если вы используете библиотеку [yandex-music-client](https://github.com/acherkashin/yandex-music-open-api/tree/main/lib), то для скачивания трека достаточно знать его `id` и использовать метод[ getTrackUrl](https://github.com/acherkashin/yandex-music-open-api/blob/main/openapi-generator/trackUrl.ts#L13). Но под капотом скачивание происходит вот так:
+
+<TitledImage src="/public/yandex-music-integration-vscode/image13.png" alt="Процесс скачивания трека"/>
+
+### Swagger и CORS
+
+Совсем забыл упомянуть очень важную вещь, вы не сможете просто взять и написать веб приложение с помощью [моего API](https://github.com/acherkashin/yandex-music-open-api/tree/main/lib). Дело в том, что Яндекс запрещает выполнение кросс доменных запросов.
+
+[В своём проекте с OpenAPI схемой](https://www.cherkashin.dev/yandex-music-open-api/) я обхожу это ограничение с помощью [proxy-сервера на NodeJS](https://t.me/cherkashindev/33), но в этом случае некоторые запросы могут не работать из-за того, что proxy-server не находится в России.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image14.png" alt="Используемый Proxy-server для API Яндекс Музыки"/>
+
+Если вы собираетесь писать своё приложение, в котором будет присутствовать бэкенд — то вы просто можете просто использовать [yandex-music-client](https://github.com/acherkashin/yandex-music-open-api/tree/main/lib) на бэке и, таким образом, не будет никаких проблем с крос-доменными запросами (но помните, что некоторые методы не доступны вне СНГ). Если вы пишите консольное приложение, телеграмм бота или мобильное приложение — то никаких проблем не будет, ведь CORS существует лишь в браузере.
+
+
+## Разработка VS Code расширения
+
+Теперь, когда у нас есть API для Яндекс Музыки, мы можем всё это дело интегрировать в VS Code. Я не буду описывать всё очень подробно, поэтому, если вам интересна базовая структура расширений VS Code,[ можете почитать о ней здесь](https://code.visualstudio.com/api/get-started/your-first-extension).
+
+Но есть одна из главных вещей, которую необходимо понимать. VS Code — обычное NodeJS приложение, поэтому вы можете использовать совершенно любые библиотеки, которые вы привыкли использовать, будь то[ axios](https://github.com/axios/axios) для выполнения запросов или[ MobX](https://mobx.js.org/README.html) для управления состоянием.
+
+
+### Основные компоненты
+
+Ниже описаны основные компоненты, которые необходимы для разработки расширения.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image15.png" alt="Компоненты VS Code, используемые в расширении"/>
+
+Создание большинства компонентов начинается с добавления так называемых [contribution points](https://code.visualstudio.com/api/references/contribution-points). Все они описываются в package.json в поле contributes.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image16.png" alt="Contribution points в package.json"/>
+
+Именно здесь необходимо определять:
+
+* Команды — что-то вроде обработчиков событий ([contributes/commands](https://code.visualstudio.com/api/references/contribution-points#contributes.commands))
+* Настройки вашего расширения ([contributes/configuration](https://code.visualstudio.com/api/references/contribution-points#contributes.configuration))
+* Боковые панели и их содержимое ([contributes/viewsContainers](https://code.visualstudio.com/api/references/contribution-points#contributes.viewsContainers),[ contributes/views](https://code.visualstudio.com/api/references/contribution-points#contributes.views))
+* Горячие клавиши ([contributes/keybindings](https://code.visualstudio.com/api/references/contribution-points#contributes.keybindings))
+* Экшены для узлов дерева и контекстное меню ([contributes/menus](https://code.visualstudio.com/api/references/contribution-points#contributes.menus))
+
+Чтобы было более понятно как работать с компонентами, давайте рассмотрим пару примеров.
+
+
+### TreeView
+
+Большая часть расширения представляет собой деревья с плейлистами, альбомами и треками. Прежде чем создать TreeView, необходимо определить соответствующий _contribution point_ в package.json.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image17.png" alt=""/>
+
+Здесь мы определяем 4 дерева, которые будут использоваться в расширении:
+
+* Плейлисты
+* Чарт
+* Рекомендации
+* Поиск
+
+Далее для каждого дерева нужно определить _data provider_, который будет решать какие узлы необходимо отобразить в дереве. Для простоты возьмём дерево, отображающее Чарт.
+
+```ts
+// Провайдер для Чарта Я.Музыки
+export class ChartTree implements vscode.TreeDataProvider<vscode.TreeItem> {
+
+    constructor(private store: Store) { }
+
+    getChildren(): vscode.ProviderResult<vscode.TreeItem[]> {
+        // Каждый трек чарта рендерится как отдельный узел в дереве
+        return this.store.getChart().then((items) => {
+            return items.map((item) => new ChartTreeItem(this.store, item, CHART_TRACKS_PLAYLIST_ID));
+        });
+    }
+}
+
+const api = new YandexMusicApi();
+const store = new Store(api);
+// Создание провайдера
+const chartProvider = new ChartTree(store);
+// Создание дерева, объявленного во вью "yandex-music-chart" с провайдером chartProvider
+vscode.window.createTreeView("yandex-music-chart", { treeDataProvider: chartProvider });
+```
+
+Код немного упрощён, полную версию можно посмотреть [тут](https://github.com/acherkashin/yandex-music-extension/blob/master/src/extension.ts#L59) и [тут](https://github.com/acherkashin/yandex-music-extension/blob/master/src/tree/chartTree.ts).
+
+
+### Диалог подтверждения
+
+В VS Code есть альтернатива привычных нам [alert/confirm](https://learn.javascript.ru/alert-prompt-confirm), которые существуют в браузере (и которыми мы обычно не пользуемся) — [window.showInformationMessage](https://code.visualstudio.com/api/references/vscode-api#:~:text=T%20%7C%20undefined%3E-,showInformationMessage,-%3CT%20extends%20string). Первым аргументом вы указываете сообщение, а затем передаёте сколько угодно кнопок.
+
+```ts
+export async function showPrompt(title: string): Promise<boolean> {
+  const result = await vscode.window.showInformationMessage(title, "Да", "Нет");
+  return result === "Да";
+}
+```
+
+<TitledImage src="/public/yandex-music-integration-vscode/image18.png" alt="Диалог, показывающийся при удалении плейлиста"/>
+
+
+### Хранение паролей и настроек
+
+VS Code предоставляет 2 возможности хранения данных, обе схожи с localStorage:
+
+* [WorkspaceConfiguration](https://code.visualstudio.com/api/references/vscode-api#WorkspaceConfiguration)
+* и[ SecretStorage](https://code.visualstudio.com/api/references/vscode-api#SecretStorage)
+
+Так как нам необходимо хранить пароли, то первый вариант нам не подходит. Все настройки хранятся в общем файле `settings.json` и доступны для любого расширения. Это именно те настройки VS Code, которые вы изменяете, чтобы настроить размер шрифта или темы.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image19.png" alt="Пример настроек VS Code, доступных через WorkspaceConfiguration"/>
+
+
+Мы же собираемся хранить токен авторизации, поэтому важно использовать именно второй вариант — SecretStorage. Хранится SecretStorage в контексте нашего расширения, который передаётся в метод activate, [выполняющийся при запуске расширения](https://code.visualstudio.com/api/get-started/extension-anatomy#extension-entry-file). API такой же простой, как и API localStorage в браузере.
+
+
+<TitledImage src="/public/yandex-music-integration-vscode/image20.png" alt="Интерфейс SecretStorage"/>
+
+
+Очень просто и понятно оба способа хранения настроек описаны в статье [SecretStorage VSCode extension API](https://habr.com/ru/post/556916/). В ней же описывается тот же подход с реализацией класс-синглтона для настроек, [который я использую в расширении](https://github.com/acherkashin/yandex-music-extension/blob/master/src/settings.ts#L59).
+
+
+## Воспроизведение музыки
+
+
+### Предыстория
+
+Мы разобрались с получением и отображением треков и находимся на финишной прямой, теперь осталось самое главное — воспроизвести их. Кажется, что всё довольно просто — VS Code работает на электроне, значит мы легко сможем воспроизвести музыку, так же как и в браузере. Всё так, да немного не так, немного погуглив, я наткнулся на [гитхаб ишью](https://github.com/Microsoft/vscode/issues/421).
+
+<TitledImage src="/public/yandex-music-integration-vscode/image21.png" alt=""/>
+
+
+В этом ишью есть две новости:
+
+* плохая — нельзя просто взять и воспроизвести музыку
+* хорошая — можно использовать любой nodejs пакет, в том числе для проигрывания музыки.
+
+После долгих поисков подходящего npm-пакета я нахожу [play-sound](https://github.com/shime/play-sound). Но после недолгого использования я сразу же понимаю, что использовать этот пакет просто невозможно:
+
+* он не умеет ничего кроме воспроизведения музыки, а значит перемотка, регулировка звука и всё остальное — ложится на ваши плечи
+* К тому же [нельзя узнать закончился ли трек](https://github.com/shime/play-sound/issues/37), чтобы включить следующий
+
+Далее, я нахожу [mplayer — обёртку для MPlayer](https://github.com/noodny/mplayer/), которая поддерживает все данные функции. Кажется, что всё гораздо лучше — но нет, через некоторое время использования я понимаю, что работает он ужасно:
+
+* Следующий трек воспроизводится с задержкой (библиотека не умеет в потоковое скачивание, поэтому трек необходимо полностью скачать, из-за чего происходит задержка)
+* Перемотка работает очень плохо, всё постоянно заедает
+* Из мелочей — у библиотеки нет тайпингов, их приходится писать руками
+
+**Тут я понимаю, что [расширение vscode для командной разработки](https://marketplace.visualstudio.com/items?itemName=MS-vsliveshare.vsliveshare-audio) поддерживает голосовые звонки, а значит поддерживает воспроизведение аудио внутри vscode.** Очевидно, я решил заглянуть под капот этого расширения.
+
+
+### Под капотом Microsoft Live Share Audio
+
+Все расширения в vscode находятся в `/Users/<username>/.vscode/extensions` и представляют собой обычное JavaScript приложение, где есть `package.json` и набор `js` файлов, которые можно изучать и даже дебажить. Интересующее нас расширение находится в папке `ms-vsliveshare.vsliveshare-audio-0.1.93`
+
+
+<TitledImage src="/public/yandex-music-integration-vscode/image22.png" alt="Файлы расширения Microsoft Live Share Audio"/>
+
+
+Как дебажить сторонние VS Code расширения
+
+На самом деле — всё очень просто. Открываете папку с нужным расширением в Vs Code, затем нажимаете F5 и выбираете “VS Code Extension Development” — готово.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image23.png" alt=""/>
+
+<TitledImage src="/public/yandex-music-integration-vscode/image24.png" alt=""/>
+
+
+Немного подебажив исходники, несложно заметить, что расширение под капотом использует electron для совершения звонков с помощью Skype API. Для этого достаточно открыть файл ExternalAppCallingService — в котором одноимённый класс отвечает за запуск электрона.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image25.png" alt="Файл externallAppCallingService, который отвечает за запуск электрона"/>
+
+
+1. `./out/calling/externalApp/dist` — путь к электрон приложению, с помощью которого будут осуществляться голосовые звонки
+2. При запуске электрона необходимо удалить переменные, которые устанавливает VS Code, чтобы запускаться в качестве NodeJS процесса. Нам не нужно, чтобы электрон запускался как NodeJS процесс, поэтому эти переменные нужно удалить, подробнее можно посмотреть [вот в этом ишью](https://github.com/Microsoft/vscode/issues/3011#issuecomment-184577502).
+3. Непосредственный запуск электрона.
+
+Этот код показывает, как правильно запускать `electron` в качестве дочернего процесса vscode — **это то, что нам нужно.** Получается, чтобы воспроизвести музыку, нам нужно запустить электрон из электрона (VS Code тот же электрон).
+
+<TitledImage src="/public/yandex-music-integration-vscode/image26.png" alt=""/>
+
+Также если покопаться, можно заметить, что электрон скачивается в рантайме только один раз при первом запуске расширения, но к этому мы ещё вернемся.
+
+
+### Архитектура Electron
+
+Теперь мы умеем запускать электрон — круто, теперь нам необходимо научиться воспроизводить треки, а для этого нужно понимать его архитектуру.
+
+Процесс электрона состоит из 2-х частей:
+
+* main — главная часть, в которой есть доступ к нативному API
+* renderer — часть в которой рендерится web-страница
+
+<TitledImage src="/public/yandex-music-integration-vscode/image27.png" alt=""/>
+
+Архитектура Electron
+
+Взаимодействуют эти части с помощью межпроцессовых каналов коммуникации (inter process communication (IPC) channels) — [ipcMain](https://www.electronjs.org/docs/latest/api/ipc-main) и [ipcRenderer](https://www.electronjs.org/docs/latest/api/ipc-renderer). По названиям очевидно, что:
+
+* Внутри main-процесса нужно использовать ipcMain
+* А внутри renderer-процесса — ipcRenderer (либо напрямую — небезопасно, либо через[ contextBridge](https://www.electronjs.org/docs/latest/tutorial/ipc#2-expose-ipcrenderersend-via-preload) — безопасно)
+
+Оба канала могут как отправлять, так и получать сообщения.
+
+Подробнее об архитектуре Electron можно [почитать здесь](https://www.electronjs.org/docs/latest/tutorial/process-model), а о [IPC-каналах здесь](https://www.electronjs.org/docs/latest/tutorial/ipc).
+
+
+### Воспроизведение трека
+
+Для воспроизведения будем использоваться обычное[ Audio-API](https://developer.mozilla.org/en-US/docs/Web/API/HTMLAudioElement/Audio), поэтому здесь всё просто. Самая интересная часть — передача трека, который мы хотим воспроизвести, от VS Code в Renderer-процесс электрона. Передавать мы будем пейлоад следующего типа:
+
+```ts
+export interface IPlayPayload {
+  url: string;
+  title: string;
+  artist: string;
+  album: string;
+  coverUri: string;
+  autoPlay: boolean;
+}
+```
+
+Чтобы понять как это реализовать — давайте взглянем на диаграмму, сейчас нас интересуют лишь зелёные стрелки, начало процесса в VS Code extension ⇒ Store.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image28.png" alt="Схема воспроизведения трека"/>
+
+Всё ещё сложнее, когда нужно воспроизвести следующий, трек, когда предыдущий завершился. В этом случае — нужно преодолеть целый круг:
+
+* От Audio до Store, чтобы оповестить Store, что трек завершился
+* От Store до Audio, чтобы воспроизвести следующий трек
+
+При передаче данных от VS Code extension до Electron Process — необходимо их сериализовать в JSON, потому что между процессами мы не можем передавать JavaScript объекты.
+
+```ts
+play(trackinfo?: IPlayPayload) {
+    this.childProcess?.send(JSON.stringify({
+      command: "play",
+      payload: trackinfo
+    }));
+  }
+```
+
+### Загрузка Electron в рантайме
+
+Кажется можно уже радоваться, всё прекрасно работает, треки крутятся, а звёзды на [гитхабе мутятся](https://github.com/acherkashin/yandex-music-extension) (нет!), но начали появляться [ишью на гитхабе для мака и линукса](https://github.com/acherkashin/yandex-music-extension/issues/14).
+
+Изначально, я просто добавил electron, как зависимость к проекту и всё работало хорошо. Как оказалось, нужная версия электрона скачивается при установке npm пакетов, а я работал на винде и соответственно, расширение работало только на винде.
+
+Снова покопавшись в Live Share Audio, я обнаружил, что расширение cкачивает нужную версию электрона в рантайме с собственных серверов.
+
+<TitledImage src="/public/yandex-music-integration-vscode/image29.png" alt=""/>
+
+<TitledImage src="/public/yandex-music-integration-vscode/image30.png" alt=""/>
+
+<TitledImage src="/public/yandex-music-integration-vscode/image31.png" alt=""/>
+
+
+Мне не хотелось хостить электрон для всевозможных версий, как это сделано в Live Share Audio, из-за чего приостановил работу над расширением.
+
+Через некоторое время я понял, что если electron устанавливает необходимые бинарники в рантайме, то код скачивания должен быть где-то в их репозитории. Немного покопавшись, я нашёл пакет [electron/get](https://github.com/electron/get) — именно он используется под капотом, когда вы устанавливаете электрон в зависимости. Также я нашёл [почти готовый скрипт для установки нужной версии электрона в рантайме](https://github.com/electron/electron/blob/9c48992e21c64f25391b7057c85f35a61ba5ff08/npm/install.js).
+
+
+## Итог
+
+На этом всё. Спасибо, если смогли дочитать до самого конца, я думаю таких не много, статья получилась достаточно длинной. Если у вас есть какие-либо вопросы или предложения — обязательно пишите в личку или в комментариях. Буду признателен, если сможете поддержать проект любым способом:
+
+
+* Идеями в комментариях к статье или в [ишью на гитхабе](https://github.com/acherkashin/yandex-music-extension/issues)
+* [Звёздочками на гитхабе](https://github.com/acherkashin/yandex-music-extension/)
+* [Отзывами в магазине расширений](https://marketplace.visualstudio.com/items?itemName=acherkashin.yandex-music-extension&ssr=false#review-details)
+* Подпиской на [мой телеграмм канал](https://t.me/cherkashindev), где я рассказываю о программировании
+
+
+
