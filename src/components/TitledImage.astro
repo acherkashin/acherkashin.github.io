@@ -7,7 +7,7 @@ interface Props {
 const { src, alt } = Astro.props;
 ---
 
-<figure>
+<figure class="flex flex-col items-center">
     <img src={src} title={alt} alt={alt}/>
     <figcaption>{alt}</figcaption>
 </figure>
