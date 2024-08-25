@@ -1,11 +1,13 @@
 export function formatDate(pubDate: string) {
-  var options: Intl.DateTimeFormatOptions = {
+  const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   };
 
-  return new Date(pubDate).toLocaleDateString('ru-RU', options);
+  const result = new Date(pubDate).toLocaleDateString('ru-RU', options);
+    
+  return result;
 }
 
 export interface WithFrontmatter<T = any> {
@@ -13,8 +15,6 @@ export interface WithFrontmatter<T = any> {
 }
 
 export function sortPostsByDate(a: WithFrontmatter<any>, b: WithFrontmatter<any>) {
-  console.log(a.frontmatter.title);
-  console.log(b.frontmatter.title);
   const pubDateA = new Date(a.frontmatter.pubDate);
   const pubDateB = new Date(b.frontmatter.pubDate);
   if (pubDateA < pubDateB) {
