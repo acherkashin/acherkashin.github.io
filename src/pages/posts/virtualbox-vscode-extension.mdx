@@ -11,6 +11,8 @@ image:
 tags: ['vscode', 'typescript', 'extension']
 ---
 
+import TitledImage from '../../components/TitledImage.astro';
+
 - [Research](#research)
 - [Генерация базового темплейта](#генерация-базового-темплейта)
 - [Немного о компонентах расширения](#немного-о-компонентах-расширения)
@@ -258,7 +260,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 Давайте наконец-то запустим наш extension:
 
-![Список виртуальных машин](/public/virtualbox-vscode-extension/vms-list.png)
+<TitledImage src="/public/virtualbox-vscode-extension/vms-list.png" alt="Список виртуальных машин"/>
 
 Отлично! Идём дальше! 🎉🎉🎉
 
@@ -378,8 +380,8 @@ context.subscriptions.push(
 
 Теперь, когда всё готово, давайте запустим наш extension:
 
-![Запуск виртуальной машины](/public/virtualbox-vscode-extension/running-vm.gif)
-![Выключение виртуальной машины](/public/virtualbox-vscode-extension/stopping-vm.gif)
+<TitledImage src="/public/virtualbox-vscode-extension/running-vm.gif" alt="Запуск виртуальной машины"/>
+<TitledImage src="/public/virtualbox-vscode-extension/stopping-vm.gif" alt="Выключение виртуальной машины"/>
 
 ## Публикация
 
