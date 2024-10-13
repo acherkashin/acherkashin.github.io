@@ -11,6 +11,7 @@ tags: []
 ---
 
 import TitledImage from '../../components/TitledImage.astro';
+import Spoiler from '../../components/Spoiler.astro';
 
 Представьте, что вы можете слушать свои любимые песни на Яндекс.Музыке, прямо из своего любимого редактора кода, не переключаясь между приложениями. Это уже не мечта, а реальность! В этой статье мы рассмотрим, как интегрировать Яндекс.Музыку в Visual Studio Code и наслаждаться любимой музыкой прямо во время работы.
 
@@ -35,36 +36,33 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Не буду углубляться в детали, это всё-таки разбор реализации, а не демо. Если интересно поближе посмотреть на расширение —[ можете просто установить его](https://marketplace.visualstudio.com/items?itemName=acherkashin.yandex-music-extension).
 
-<details>
-    <summary>Как авторизоваться в расширении</summary>
-    <p>
-Есть два способа авторизоваться в расширении:
+<Spoiler title="Как авторизоваться в расширении">
+  Есть два способа авторизоваться в расширении:
 
-* По токену
-* По логину и паролю
+  * По токену
+  * По логину и паролю
 
 
-<TitledImage src="/public/yandex-music-integration-vscode/image3.png" alt="Способы авторизации в расширении"/>
+  <TitledImage src="/public/yandex-music-integration-vscode/image3.png" alt="Способы авторизации в расширении"/>
 
-Почему так? Яндекс постепенно уходит от авторизации по логину и паролю, ведь способ не очень безопасный, и всё меньше и меньше пользователей могут использовать данный способ. Если вы уверены, что ввели корректные данные, но всё равно видите данную ошибку, то вам стоит использовать второй вариант — вход с помощью токена.
+  Почему так? Яндекс постепенно уходит от авторизации по логину и паролю, ведь способ не очень безопасный, и всё меньше и меньше пользователей могут использовать данный способ. Если вы уверены, что ввели корректные данные, но всё равно видите данную ошибку, то вам стоит использовать второй вариант — вход с помощью токена.
 
-<TitledImage src="/public/yandex-music-integration-vscode/image4.png" alt="Ошибка, если для вашего аккаунта не работает авторизация по логину и паролю"/>
+  <TitledImage src="/public/yandex-music-integration-vscode/image4.png" alt="Ошибка, если для вашего аккаунта не работает авторизация по логину и паролю"/>
 
-Существует 3 способа получить токен:
+  Существует 3 способа получить токен:
 
-1. С помощью расширения
-    1. [Для Google Chrome](https://chrome.google.com/webstore/detail/yandex-music-token/lcbjeookjibfhjjopieifgjnhlegmkib)
-    2. [Для Firefox](https://addons.mozilla.org/en-US/firefox/addon/yandex-music-token/)
-2. С помощью[ Android приложения](https://github.com/MarshalX/yandex-music-token/tree/main/android-app). Оно использует официальный SDK Яндекса для андроида.
-3. [Вручную](https://github.com/MarshalX/yandex-music-api/discussions/513#discussioncomment-2729781), скопировав токен из адресной строки, во время редиректа на страницу Я.Музыки.
+  1. С помощью расширения
+      1. [Для Google Chrome](https://chrome.google.com/webstore/detail/yandex-music-token/lcbjeookjibfhjjopieifgjnhlegmkib)
+      2. [Для Firefox](https://addons.mozilla.org/en-US/firefox/addon/yandex-music-token/)
+  2. С помощью[ Android приложения](https://github.com/MarshalX/yandex-music-token/tree/main/android-app). Оно использует официальный SDK Яндекса для андроида.
+  3. [Вручную](https://github.com/MarshalX/yandex-music-api/discussions/513#discussioncomment-2729781), скопировав токен из адресной строки, во время редиректа на страницу Я.Музыки.
 
-Оба браузерных расширения используют последний способ и просто перехватывают токен во время редиректа, поэтому вам нужно уже быть авторизованным в Яндекс.Музыке. Исходники всех способов собраны[ здесь в репозитории](https://github.com/MarshalX/yandex-music-token) ([спасибо Илье](https://t.me/MarshalX), что всё это дело собрал вместе).
+  Оба браузерных расширения используют последний способ и просто перехватывают токен во время редиректа, поэтому вам нужно уже быть авторизованным в Яндекс.Музыке. Исходники всех способов собраны[ здесь в репозитории](https://github.com/MarshalX/yandex-music-token) ([спасибо Илье](https://t.me/MarshalX), что всё это дело собрал вместе).
 
-Самый простой способ — [расширение для Хрома](https://chrome.google.com/webstore/detail/yandex-music-token/lcbjeookjibfhjjopieifgjnhlegmkib), установите его и нажмите на кнопку “Скопировать токен”.
+  Самый простой способ — [расширение для Хрома](https://chrome.google.com/webstore/detail/yandex-music-token/lcbjeookjibfhjjopieifgjnhlegmkib), установите его и нажмите на кнопку “Скопировать токен”.
 
-<TitledImage src="/public/yandex-music-integration-vscode/image5.png" alt="Расширение для Хрома, для получения токена"/>
-    </p>
-</details>
+  <TitledImage src="/public/yandex-music-integration-vscode/image5.png" alt="Расширение для Хрома, для получения токена"/>
+</Spoiler>
 
 
 Теперь самое время взглянуть под капот. Реализация расширения будет состоять из 3-х частей:
