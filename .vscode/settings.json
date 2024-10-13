@@ -3,5 +3,6 @@
         "editor.quickSuggestions": {
             "other": "on"
         }
-    }
+    },
+    "editor.wordWrap": "on"
 }
