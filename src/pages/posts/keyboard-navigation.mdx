@@ -10,6 +10,8 @@ image:
 tags: ['accessibility', 'html', 'css']
 ---
 
+import TitledImage from '../../components/TitledImage.astro';
+
 - [Как узнать, доступно ли приложение с клавиатуры?](#как-узнать-доступно-ли-приложение-с-клавиатуры)
 - [Все функциональные элементы должны быть интерактивными](#все-функциональные-элементы-должны-быть-интерактивными)
 - [Легко определяемое положение фокуса](#легко-определяемое-положение-фокуса)
@@ -21,8 +23,7 @@ tags: ['accessibility', 'html', 'css']
 - [Тестирование вместо заключения](#тестирование-вместо-заключения)
 - [Полезные ссылки](#полезные-ссылки)
 
-
-<blockquote class="quote quote--right">
+<blockquote>
   <p>&ldquo;The power of the Web is in its universality. Access by everyone regardless of disability is an essential aspect.&rdquo;</p>
   <footer>Tim Berners-Lee, W3C Director and inventor of the World Wide Web</footer>
 </blockquote>
@@ -83,11 +84,7 @@ button:focus {
 
 Но всё же, иногда необходимо изменять стандартный порядок элементов, например, если вы вам необходимо, чтобы элементы получали фокус в порядке убывания их важности. Так на главной странице Яндекса главным элементом является строка поиска, и именно она первой получает фокус, поэтому при открытии страницы вы сразу можете начинать печатать поисковой запрос, ведь курсор уже находится в нужном месте. Вот так выглядит карта навигации для главной страницы Яндекса.
 
-<div class="centering">
-
-![Карта навигации Яндекса](/public/keyboard-navigation/yandex-keyboard-order.gif)
-
-</div>
+<TitledImage src="/public/keyboard-navigation/yandex-keyboard-order.gif" alt="Карта навигации Яндекса"/>
 
 ## Ссылка "Перейти к содержимому"
 
@@ -118,15 +115,15 @@ button:focus {
 
 - Подсказки в тултипах в [VsCode](https://code.visualstudio.com/)
 
-![Тултипы в VsCode](/public/keyboard-navigation/vscode-tooltip.gif)
+<TitledImage src="/public/keyboard-navigation/vscode-tooltip.gif" alt="Тултипы в VsCode"/>
 
 - Подсказка в правой части поля поиска на [GitHub](https://github.com/), для фокусировки необходимо нажать <span class="key">/</span>
 
-![Поле поиска на github, для фокусировки необходимо нажать "/"](/public/keyboard-navigation/github-searchbox.png)
+<TitledImage src="/public/keyboard-navigation/github-searchbox.png" alt='Поле поиска на github, для фокусировки необходимо нажать "/"'/>
 
 - Подсказка в placeholder'е на сайте библиотеки [Vuetify](https://vuetifyjs.com/en/), для фокусировки необходимо нажать <span class="key">/</span>
 
-![Поле поиска на vuetifyjs, для фокусировки необходимо нажать "/"](/public/keyboard-navigation/vuetifyjs-searchbox.png)
+<TitledImage src="/public/keyboard-navigation/vuetifyjs-searchbox.png" alt='Поле поиска на vuetifyjs, для фокусировки необходимо нажать "/"'/>
 
 ## Все ли можно сделать доступным с клавиатуры?
 
