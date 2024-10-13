@@ -7,7 +7,7 @@ description: 'SEO description'
 image:
   src:
   alt:
-tags: ['c#', 'JavaScript', ".NET"]
+tags: ['csharp', 'javascript', ".net"]
 ---
 ![C# and JavaScript](/public/csharp-js-comparison/article-logo.png)
 
