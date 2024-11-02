@@ -40,4 +40,9 @@ export default defineConfig({
   },
   integrations: [tailwind(), react(), sitemap(), mdx()],
   output: 'static',
+  redirects: {
+    '/vscode/typescript/extension/2020/04/14/virtualbox-vscode-extension.html': 'posts/virtualbox-vscode-extension',
+    '/accessibility/html/css/2020/06/05/keyboard-navigation.html': '/posts/keyboard-navigation',
+    '/csharp/dotnet/scripts/2020/09/26/csharp-repl.html': '/posts/csharp-repl'
+  }
 });
