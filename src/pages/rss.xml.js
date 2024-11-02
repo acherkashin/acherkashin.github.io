@@ -5,7 +5,7 @@ export async function GET(context) {
 		title: 'nicdun.dev - blog',
 		description: 'Crafting the Digital Future with Web Development Wonders',
 		site: context.site,
-		items: await pagesGlobToRssItems(import.meta.glob('./posts/*.{md,mdx}')),
+		items: await pagesGlobToRssItems(import.meta.glob('./articles/*.{md,mdx}')),
 		stylesheet: './rss/styles.xsl',
 		customData: `<language>en-us</language>`
 	});

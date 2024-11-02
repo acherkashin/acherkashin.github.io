@@ -9,7 +9,7 @@ import { MarkdownInstance, MDXInstance } from 'astro/dist/@types/astro';
 const { title } = AppConfig;
 const { description } = AppConfig;
 
-const allPosts = await Astro.glob<MDXInstance<any> | MarkdownInstance<any>>('./posts/*.(md|mdx)');
+const allPosts = await Astro.glob<MDXInstance<any> | MarkdownInstance<any>>('./articles/*.(md|mdx)');
 allPosts.sort(sortPostsByDate);
 const latestPosts = allPosts.slice(0, 3);
 ---
