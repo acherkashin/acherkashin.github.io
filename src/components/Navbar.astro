@@ -6,7 +6,9 @@ import Section from './Section.astro';
 	<div class="flex justify-between">
 		<div class="text-3xl font-bold">
 			<a href="/"
-				>💻 <span class="pr-2 text-2xl text-gray-500">{'<'}</span>cherkashin<span
+				>
+				<img class="w-12 h-12 rounded-full inline-block" src="/public/logo.png"/>
+				<span class="pr-2 text-2xl text-gray-500">{'<'}</span>cherkashin<span
 					class="text-orange-600">.</span
 				>dev<span class="pl-2 text-2xl text-gray-500">{'/>'}</span></a
 			>
@@ -14,7 +16,9 @@ import Section from './Section.astro';
 		<div class="flex items-center">
 			<nav>
 				<ul class="hidden flex-row sm:flex">
-					<li><a href="https://t.me/s/cherkashindev" class="mr-3 hover:text-orange-600">Посты</a></li>
+					<li>
+						<a href="https://t.me/s/cherkashindev" class="mr-3 hover:text-orange-600">Посты</a>
+					</li>
 					<li><a href="/tags" class="mr-3 hover:text-orange-600">Теги</a></li>
 					<li><a href="/" class="hover:text-orange-600">Блог</a></li>
 				</ul>
