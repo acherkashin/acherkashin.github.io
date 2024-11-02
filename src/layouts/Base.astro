@@ -2,6 +2,7 @@
 import Footer from '@/components/Footer.astro';
 import Navbar from '@/components/Navbar.astro';
 import { AppConfig } from '@/utils/AppConfig';
+import { YandexMetrika } from 'astro-yandex-metrika';
 
 export interface Props {
 	head: {
@@ -40,6 +41,8 @@ const {
 				document.querySelector('html')?.classList.remove('dark');
 			}
 		</script>
+
+		<YandexMetrika id="62071573"/>
 	</head>
 	<body
 		class="flex min-h-screen flex-col bg-stone-100 font-serif text-gray-950 dark:bg-stone-900 dark:text-white"
