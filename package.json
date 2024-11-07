@@ -20,6 +20,7 @@
 		"@types/react-dom": "^18.2.18",
 		"@vercel/analytics": "^1.2.2",
 		"astro": "^4.16.8",
+		"astro-yandex-metrika": "^1.0.1",
 		"canvas-confetti": "^1.9.2",
 		"mdast-util-to-string": "^4.0.0",
 		"react": "^18.2.0",
