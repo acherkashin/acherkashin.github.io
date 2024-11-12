@@ -7,7 +7,7 @@ interface Props {
 const { title } = Astro.props;
 ---
 
-<details class='bg-slate-800 bg-[rgb(41,37,36)] mt-8'>
+<details class='bg-[#22272e] text-white dark:bg-stone-800 mt-8 rounded-lg prose-a:text-white'>
     <summary class='p-4 px-9'>{title}</summary>
     <div class='pt-0 pb-4 px-[36px]'><slot /></div>
 </details>
