@@ -43,21 +43,21 @@ import Spoiler from '../../components/Spoiler.astro';
 
 Как хорошо известно, многие зарубежные компании приостановили свою деятельность на территории РФ. Я достаточно активно использую Notion и храню в нём много важной для меня информации, поэтому я решил написать в поддержку и узнать, нет ли таких же планов у Notion. Я получил следующий ответ:
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/support-notion-1.png" alt="Поддержка говорит, никаких проблем - пользуйтесь наздоровье"/>
+<TitledImage src="/personal-planning-system-in-notion-1/support-notion-1.png" alt="Поддержка говорит, никаких проблем - пользуйтесь наздоровье"/>
 
 Примерно в середине Апреля в [русскоязычном сообществе Notion](https://t.me/ru_notion) начали говорить о блокировках, мол нескольких человек заблокировали без предварительного уведомления. Поэтому снова обратился в поддержку и получил ответ, который отличался кардинально от того, что получил в первый раз.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/support-notion-2.png" alt="Тажа самая поддержка: сорян, не видать вам своего аккаунта, ничего личного просто санкции"/>
+<TitledImage src="/personal-planning-system-in-notion-1/support-notion-2.png" alt="Тажа самая поддержка: сорян, не видать вам своего аккаунта, ничего личного просто санкции"/>
 
 Мой аккаунт не был заблокирован, поэтому я сделал бэкап и продолжил использовать Notion и наблюдать за диалогом в [сообществе](https://t.me/ru_notion). Появились сообщения, что Notion не собирается блокировать пользователей в России, поэтому я решил написать в поддержку в третий раз, как говорится, Бог любит троицу.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/support-notion-3.png" alt="И снова поддержка: мы тут тестили новый алгоритм блокировок - случайно заблочили вас по ошибке"/>
+<TitledImage src="/personal-planning-system-in-notion-1/support-notion-3.png" alt="И снова поддержка: мы тут тестили новый алгоритм блокировок - случайно заблочили вас по ошибке"/>
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/support-notion-4.png" alt="Поддержка: нет Россия пока не под санкциями - отбой тревоги" />
+<TitledImage src="/personal-planning-system-in-notion-1/support-notion-4.png" alt="Поддержка: нет Россия пока не под санкциями - отбой тревоги" />
 
 **Кратко говоря:** российские аккаунты были заблокированы по ошибке, можете спокойно продолжать использовать Notion в России. Но как тут можно спокойно продолжать пользовать после такого, сразу вспоминается фраза “мыши плакали, кололись, но продолжали жрать кактус”.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/notion-will-block-us.jpeg" alt="Ох, уж этот Notion, он сто пудов нас заблокирует"/>
+<TitledImage src="/personal-planning-system-in-notion-1/notion-will-block-us.jpeg" alt="Ох, уж этот Notion, он сто пудов нас заблокирует"/>
 
 Для себя я решил следующее:
 
@@ -106,7 +106,7 @@ import Spoiler from '../../components/Spoiler.astro';
 
 Как мы только что упомянули, инбокс — куча необработанной информации (входящие). Каждое “входящее” может содержать: задачи, проекты, идеи и справочную информацию, но что конкретно и в каком количестве — мы не знаем до тех пор, пока не проанализируем запись и не выделим из неё составляющие. Схему работы с инбоксом можно представить следующим образом. Пока не обращайте внимание на надписи на рёбрах, о них мы поговорим уже совсем скоро.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/how-inbox-works.png" alt="Схема работы с Инбоксом"/>
+<TitledImage src="/personal-planning-system-in-notion-1/how-inbox-works.png" alt="Схема работы с Инбоксом"/>
 
 Отсюда вытекает, что инбокс — это обособленный объект в нашей системе планирования. Поэтому при реализации Инбокс будет представлять собой отдельную базу данных. Нам потребуется всего 3 поля:
 
@@ -116,11 +116,11 @@ import Spoiler from '../../components/Spoiler.astro';
 
 Таким образом, инбокс будет выглядеть примерно вот так.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/inbox-implementation-notion.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-1/inbox-implementation-notion.png" alt=""/>
 
 Как было указано на схеме работы с инбоксом, после просмотра входящего, он должен быть разбит на составляющие и перемещен в подходящее место. Довольно часто входящее будет достаточно простым и его просто необходимо переименовать, дополнить описанием и, например, прикрепить к определенному проекту (в случае с задачей). В этом случае мы просто можем использовать функцию **Move To**.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/notion-move-to.gif" alt="Использование Move To"/>
+<TitledImage src="/personal-planning-system-in-notion-1/notion-move-to.gif" alt="Использование Move To"/>
 
 Если ваш инбокс слегка растолстел и вам необходимо по-быстрому его разбросать, лучше использовать шорткат:
 
@@ -141,7 +141,7 @@ import Spoiler from '../../components/Spoiler.astro';
 
 Самый простой, с точки зрения настройки, способ - добавить инбокс в фавориты.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/add-to-favorites.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-1/add-to-favorites.png" alt=""/>
 
 Но для этого вам всё равно придётся открывать Notion и ... в общем всё ещё слишком много кликов, поэтому не задерживаемся и идём дальше.
 
@@ -153,15 +153,15 @@ import Spoiler from '../../components/Spoiler.astro';
 2. Сгенерировать тело запроса.
 3. Выполнить POST запрос по указанному адрес.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/add-to-inbox-shortcut-implementation.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-1/add-to-inbox-shortcut-implementation.png" alt=""/>
 
 Чтобы иметь быстрый доступ к шорткату - выберите “Pin in Menu Bar”. Таким образом, он появится в верхнем меню на вашем макбуке, как показано ниже.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/shortcut-on-the-top.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-1/shortcut-on-the-top.png" alt=""/>
 
 Шорткат будет также доступен и на телефоне. Чтобы обеспечить к нему быстрый доступ, просто добавьте его на начальный экран, как показано на скриншоте.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/add-to-home-screen.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-1/add-to-home-screen.png" alt=""/>
 
 [Перейдя по ссылке](https://t.me/cherkashindev/43) можете посмотреть видео демонстрации работы шортката на телефоне.
 
@@ -185,11 +185,11 @@ import Spoiler from '../../components/Spoiler.astro';
 
 На винде, Алиса появится сразу после установки Яндекс.Браузера на системной панели.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/alisa-yandex-browser.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-1/alisa-yandex-browser.png" alt=""/>
 
 На телефоне, вам потребуется приложение “Яндекс” для запуска Алисы. На iPhone оно выглядит следующим образом, кнопка запуска Алисы находится в нижней панели.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/yandex-app.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-1/yandex-app.png" alt=""/>
 
 Но здесь мы сталкиваемся с той же проблемой, чтобы добавить запись в инбокс от нас необходимо слишком много действий, хотелось бы запускать навык одним нажатием, так же как в случае Apple Shortcuts. К счастью, для этого тоже есть способ:
 
@@ -216,7 +216,7 @@ import Spoiler from '../../components/Spoiler.astro';
 2. Отправляете боту ключ интеграции
 3. Отправляете идентификатор базы (добавление заметок на страницу не поддерживается)
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/telegram-integration.gif" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-1/telegram-integration.gif" alt=""/>
 
 ### Instant Notion
 
@@ -232,7 +232,7 @@ import Spoiler from '../../components/Spoiler.astro';
 
 Реализация не прям вау, аддон работает только с текстом, поэтому может выдавать ошибку, если текст содержит недопустимые символы. Самое главное в самом низу body (поле над кнопкой “Send To Notion”), находится ссылка на сообщение, поэтому вы сможете быстро отметить на email в будущем. Если при добавлении имейла в Notion у вас появилась ошибка из-за недопустимых символов, просто удалите всё содержимое за исключением данной ссылки.
 
-<TitledImage src="/public/personal-planning-system-in-notion-1/gmail-integration.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-1/gmail-integration.png" alt=""/>
 
 ### Notion Web Clipper
 

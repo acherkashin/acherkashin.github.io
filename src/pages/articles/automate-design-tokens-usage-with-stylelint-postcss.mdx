@@ -20,11 +20,11 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Статья будет полезна для разработчиков, которые уже используют или собираются использовать дизайн токены.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image1.png" alt=""/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image1.png" alt=""/>
 
 “Автоматизируй всё, что можешь автоматизировать”. Я уже не помню, где услышал эту фразу, но теперь она меня повсюду преследует и не даёт спокойно спать по ночам. Бесит вся рутина, и хочется, чтобы инструменты делали всю работу за меня.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image2.png" alt=""/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image2.png" alt=""/>
 
 До этого я автоматизировал:
 
@@ -38,7 +38,7 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Мы реализовали простенький UI, а наш дизайнер сел за чашечкой тёмного ~~нефильтрованного~~ кофе и унифицировал цвета, типографику и иконки. Для каждого свойства мы создали CSS переменные и, положа руку на сердце, поклялись больше не хардкодить эти значения. Все эти переменные называются дизайн-токенами и являются самыми маленькими, атомарными правилами дизайн системы.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image3.png" alt=""/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image3.png" alt=""/>
 
 Но время от времени, к сожалению, мы нарушаем нашу клятву. Иногда, мы не глядя копируем стили из фигмы, думаем, что исправим перед мёржем изменений и забываем, а новые разработчики и вовсе не в курсе, что нужно использовать дизайн-токены. А потом приходят клиенты и жалуются, что в каком-то месте не могут изменить цвет или шрифт. Поэтому я решил посмотреть, что можно с этим сделать и как это автоматизировать.
 
@@ -105,11 +105,11 @@ module.exports = {
 Теперь давайте запустим команду `pnpx stylelint "**/*.css"` и проверим, что линтер работает.
 
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image4.png" alt="Stylelint нашёл 16 ошибок в коде"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image4.png" alt="Stylelint нашёл 16 ошибок в коде"/>
 
 Консоль это, конечно, хорошо, но всем нам нравится видеть ошибки прямо в редакторе кода. Если вы, как и я используете VS Code — установите[плагин для StyleLint](https://marketplace.visualstudio.com/items?itemName=stylelint.vscode-stylelint)
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image5.png" alt="Плагин для Stylelint подсвечивает ошибки в коде"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image5.png" alt="Плагин для Stylelint подсвечивает ошибки в коде"/>
 
 Можно было бы сказать, что всё готово, мы добавили литер — расходимся, но нет, давайте автоматизируем это безобразие.
 
@@ -118,7 +118,7 @@ module.exports = {
 
 Прежде чем что-то автоматизировать, нам нужно создать дизайн токены, которые мы в итоге будем использовать в наших стилях. Для этого создадим файл _variables.css_ и для начала создадим переменные для насыщенности шрифта.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image6.png" alt="Генерацию токенов тоже можно автоматизировать"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image6.png" alt="Генерацию токенов тоже можно автоматизировать"/>
 
 Теперь нам нужно научиться заменять значения на созданные токены. К счастью, мы можем передать в конфигурацию плагина функцию [autoFixFunc](https://github.com/AndyOGo/stylelint-declaration-strict-value#autofix-support), которая будет вызываться, когда styleling запущен с опцией `--fix`.
 
@@ -151,11 +151,11 @@ function autoFixFunc(node, validation, root, config) {
 "lint:css": "pnpx stylelint --fix \"**/*.css\""
 ```
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image7.png" alt="Значения font-weight заменены на соответствующие переменные"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image7.png" alt="Значения font-weight заменены на соответствующие переменные"/>
 
 Тут вы должны воскликнуть, что я вас обманул и вообще посмотри на эту функцию, поддерживать такое вручную невозможно. Немного терпения, в ход вступает postcss.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image8.png" alt=""/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image8.png" alt=""/>
 
 Если присмотреться к реализации функции автозамены, то легко заметить, что её задача очень простая — заменить найденное значение на переменную, с точно таким же значением.
 
@@ -244,26 +244,26 @@ function autoFixFunc(node, validation, root, config) {
 
 С насыщенностью шрифта всё хорошо, теперь давайте создадим дизайн токены для цветов и добавим их в `variables.css`.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image9.png" alt="Такие названия переменных подойдут лишь для демо-проекта, в боевых проектах используйте семантические названия токенов"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image9.png" alt="Такие названия переменных подойдут лишь для демо-проекта, в боевых проектах используйте семантические названия токенов"/>
 
 Далее запустим `pnpm run lint:css` и вуаля, теперь все свойства используют css переменные, ну почти.
 
 
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image10.png" alt="Авто-замена жёстко заданных цветов на дизайн-токены"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image10.png" alt="Авто-замена жёстко заданных цветов на дизайн-токены"/>
 
 Хочется закричать “Виват!” и сказать, что всё готово, но рано. Если присмотреться — цвет, который задан с помощью `rgba`, не заменился, хотя мы создали для него переменную `white-opacity`.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image11.png" alt="Цвет rgba(255, 255, 255, 0.87) не заменился на переменную"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image11.png" alt="Цвет rgba(255, 255, 255, 0.87) не заменился на переменную"/>
 
 Это можно решить настройкой `ignoreFunctions` плагина, которой необходимо задать значение `false`, по-умолчанию все функции игнорируются.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image12.png" alt="Цвета заменился после использования изменения настройки `ignoreFunctions`"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image12.png" alt="Цвета заменился после использования изменения настройки `ignoreFunctions`"/>
 
 Но есть у плагина и ограничения — он не умеет заменять значения внутри функций. После того как мы добавили настройку `ignoreFunctions: false` stylelint ругается, что мы не используем переменные для свойств filter. К сожалению,[тут мы ничего поделать не можем](https://github.com/AndyOGo/stylelint-declaration-strict-value/issues/325#issuecomment-1799207362), и нам придётся вручную заменить значения на дизайн токены.
 
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image13.png" alt="Stylelint ругается, что мы не используем переменные для свойств filter"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image13.png" alt="Stylelint ругается, что мы не используем переменные для свойств filter"/>
 
 А чтобы stylelint перестал ругаться, нужно добавить регулярку `"/^drop-shadow/"` для `drop-shadow` в `ignoreValues`.
 
@@ -273,7 +273,7 @@ ignoreValues: ["/^drop-shadow/", 'currentColor', 'unset', 'inherit', 'initial', 
 
 В общем и целом всю нашу проделанную работу можно отобразить с помощью вот такой схемы.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image14.png" alt="Схема работы описанного решения"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image14.png" alt="Схема работы описанного решения"/>
 
 ## Автоматизируем запуск линтера
 
@@ -317,7 +317,7 @@ export default defineConfig({
 
 В этом нет ничего страшного до тех пор, пока мы не решили сильнее скруглить края для кнопки, и чекбокс не стал похож на радио кнопку. Поэтому важно доработать решение, чтобы таких конфузов не возникало. Но тут сложно предложить какое-то универсальное решение, которое подойдёт для любого проекта.
 
-<TitledImage src="/public/automate-design-tokens-usage-with-stylelint-postcss/image15.png" alt="Изменение радиуса кнопки приводит к изменению чекбокса"/>
+<TitledImage src="/automate-design-tokens-usage-with-stylelint-postcss/image15.png" alt="Изменение радиуса кнопки приводит к изменению чекбокса"/>
 
 ### Формат значений
 

@@ -17,7 +17,7 @@ import Spoiler from '../../components/Spoiler.astro';
 
 Так я думал пока я не столкнулся с проблемами потребления памяти. Сегодня я хочу рассказать об одной из таких проблем, связанных с неуправляемой памятью. Перед прочтением можно кратко прочитать о сборщике мусора [здесь](https://t.me/cherkashindev/117) или [здесь](https://www.jetbrains.com/help/dotmemory/NET_Memory_Management_Concepts.html).
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image1.png" alt=""/>
+<TitledImage src="/unmanaged-memory-dotnet/image1.png" alt=""/>
 
 ## Проблема
 
@@ -28,11 +28,11 @@ import Spoiler from '../../components/Spoiler.astro';
 
 После того как мы смогли воспроизвести проблему, DotMemory нарисовал нам вот такой график.
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image2.png" alt="Даже спустя 4 часа память всё ещё не освободилась"/>
+<TitledImage src="/unmanaged-memory-dotnet/image2.png" alt="Даже спустя 4 часа память всё ещё не освободилась"/>
 
 Мы решили, что всё достаточно очевидно — нужно просто принудительно запустить сборщик мусора после завершения вычислений. И мы были правы, но не совсем. После вызова `GC.Collect()` DotMemory нарисовал нам немного другую картину (На самом деле, перед этим мы ещё исправили пару утечек памяти, но сегодня не об этом).
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image3.png" alt="Мусор собран, на приложение всё ещё потребляет 8Гб памяти"/>
+<TitledImage src="/unmanaged-memory-dotnet/image3.png" alt="Мусор собран, на приложение всё ещё потребляет 8Гб памяти"/>
 
 
 Очевидно, сборщик собрал весь мусор накопленный во втором поколении (зелёная область), но приложение всё ещё занимает **8 Гб, несмотря на то, что реальный объём потребляемой памяти приложением всего 1 ГБ**.
@@ -73,7 +73,7 @@ import Spoiler from '../../components/Spoiler.astro';
 
 Эмуляция потребления памяти происходит очень просто — по команде `start` в 4-х потоках выполняется заполнение списков строками, до тех пока не будет выполнена команда `stop`.
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image4.png" alt="Воспроизведение проблемы с помощью консольного приложения"/>
+<TitledImage src="/unmanaged-memory-dotnet/image4.png" alt="Воспроизведение проблемы с помощью консольного приложения"/>
 
 Участок между `clear` и `gc` — наша первоначальная проблема, которую мы решили с помощью принудительного запуска сборщика мусора. Участок после `gc`, это та самая неуправляемая память.
 
@@ -91,7 +91,7 @@ import Spoiler from '../../components/Spoiler.astro';
 
 Я оставил приложение работать на ночь, и утром совершенно ничего не изменилось, приложение всё также потребляет 6.4Гб памяти.
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image5.png" alt=""/>
+<TitledImage src="/unmanaged-memory-dotnet/image5.png" alt=""/>
 
 Даже спустя 11 часа память всё ещё не освободилась
 
@@ -100,7 +100,7 @@ import Spoiler from '../../components/Spoiler.astro';
 
 Теперь ясно, что наше приложение не отдаст память без боя. Ну что ж, давайте проверим, что произойдёт, если повторно запустить команду `start`. То есть, мы проделаем, описанный выше алгоритм дважды.
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image6.png" alt="Повторный запуск команды start приводит к уменьшение неуправляемой памяти"/>
+<TitledImage src="/unmanaged-memory-dotnet/image6.png" alt="Повторный запуск команды start приводит к уменьшение неуправляемой памяти"/>
 
 Как видно на графике dotMemory, как только мы запустили команду, и приложение снова начало потреблять память, неуправляемая память начала быстро освобождаться.
 
@@ -111,7 +111,7 @@ import Spoiler from '../../components/Spoiler.astro';
 Для этого мы проделаем всё те же операции на первом приложении, а потом запустим команду `start` на втором и посмотрим, как будет себя вести неуправляемая память.
 
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image7.png" alt="Приложение освобождает неуправляемую память, так как она необходима для второго приложения"/>
+<TitledImage src="/unmanaged-memory-dotnet/image7.png" alt="Приложение освобождает неуправляемую память, так как она необходима для второго приложения"/>
 
 Как мы видим, как только второму приложению потребовалось больше памяти, произошло перераспределение ресурсов и первое приложение начало отдавать не используемую им неуправляемую память.
 
@@ -123,18 +123,18 @@ import Spoiler from '../../components/Spoiler.astro';
 1. Устанавливаем `dotnet tool install --global dotnet-dump`
 2. Находим “Process ID” в Менеджере задач во вкладке Details и создаём дамп с помощью команды `dotnet-dump collect -p 10132 \`
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image8.png" alt=""/>
+<TitledImage src="/unmanaged-memory-dotnet/image8.png" alt=""/>
 
 3. Запускаем анализатор `dotnet-dump analyze ./core_20230808_073105.dmp`
 4. Посмотрим, что находится в нашем дампе памяти с помощью команды `dumpheap -stat`
 
 Как мы видим, большая часть памяти занятая приложением свободна — это и есть та самая неуправляемая память.
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image9.png" alt="Как выглядит неуправляемая память в dotnet-dump"/>
+<TitledImage src="/unmanaged-memory-dotnet/image9.png" alt="Как выглядит неуправляемая память в dotnet-dump"/>
 
 Вместо dotnet-dump можно использовать [windbg](https://learn.microsoft.com/en-gb/windows-hardware/drivers/debugger/), он покажет такие же результаты.
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image10.png" alt="Как выглядит неуправляемая память в windbg"/>
+<TitledImage src="/unmanaged-memory-dotnet/image10.png" alt="Как выглядит неуправляемая память в windbg"/>
 
 ### Подведём итог
 
@@ -154,7 +154,7 @@ Large Object Heap, как очевидно следует из названия,
 
 Почему я решил об этом упомянуть? В более ранней версии этого консольного приложения, я заметил, что после запуска сборщика мусора оно всё ещё занимает 1Гб. И вся эта память находится в секции LOH and POH.
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image11.png" alt="Списки в Large Object Heap"/>
+<TitledImage src="/unmanaged-memory-dotnet/image11.png" alt="Списки в Large Object Heap"/>
 
 Почему так происходило? Дело в том, что списки, которые я использую под капотом для эмуляции потребления памяти, я очищал так:
 
@@ -170,10 +170,10 @@ list.Clear();
 Так вот, при вызове `list.Clear()` происходит удаление элементов из внутреннего массива, но его размер остаётся прежним. Это хорошо видно ниже, все списки пусты (Count = 0), но их ёмкость равна `33 554 432` и очевидно эти массивы попадут в LOH.
 
 <Spoiler title='Декомпилированные исходники метода List.Clear'>
-  <TitledImage src="/public/unmanaged-memory-dotnet/image12.png" alt="Декомпилированные исходники метода List.Clear"/>
+  <TitledImage src="/unmanaged-memory-dotnet/image12.png" alt="Декомпилированные исходники метода List.Clear"/>
 </Spoiler>
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image13.png" alt="Свойства Count и Capacity списков в отладчике"/>
+<TitledImage src="/unmanaged-memory-dotnet/image13.png" alt="Свойства Count и Capacity списков в отладчике"/>
 
 ### Конфигурация сборщика мусора
 
@@ -208,7 +208,7 @@ list.Clear();
 * Как только этот порог будет достигнут, сборщик мусора попробует очистить неиспользуемую память
 * Приложение упадёт, так как очистить память не удалось
 
-<TitledImage src="/public/unmanaged-memory-dotnet/image14.gif" alt="Приложение падает при достижении лимита памяти в 2Гб"/>
+<TitledImage src="/unmanaged-memory-dotnet/image14.gif" alt="Приложение падает при достижении лимита памяти в 2Гб"/>
 
 ## Выводы
 

@@ -22,6 +22,6 @@
   "figure": {
     "scope": "markdown,mdx",
     "prefix": "image",
-    "body": "<TitledImage src=\"/public/${TM_FILENAME_BASE}/${1:image.png}\" alt=\"${2}\"/>",
+    "body": "<TitledImage src=\"/${TM_FILENAME_BASE}/${1:image.png}\" alt=\"${2}\"/>",
   }
 }

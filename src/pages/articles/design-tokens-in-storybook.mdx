@@ -47,7 +47,7 @@ import Spoiler from './../../components/Spoiler.astro';
 - Иконки это отдельная боль, из‑за незнания, что какая‑то иконка уже есть в проекте — они часто дублируются. Или же дизайнер присылает немного видоизменённую иконку, и помимо дублирования, у нас появляются несколько вариаций одной и той же иконки.
 - Во время редизайна, у дизайнера нет простого способа проверить, что все цвета изменены корректно. Разве, что потыкать сам продукт.
 
-<TitledImage src="/public/design-tokens-in-storybook/tipical-situation.png" alt="Стандартная проблема, мы ищем есть ли у нас бургер-иконка"/>
+<TitledImage src="/design-tokens-in-storybook/tipical-situation.png" alt="Стандартная проблема, мы ищем есть ли у нас бургер-иконка"/>
 
 Хотелось бы решить эту проблему, и голос в голове подсказывал «не придумывай лишнего, все дизайн токены есть прямо у нас в коде в виде LESS-переменных, иконки тоже там — используй их». И я начал искать.
 
@@ -61,11 +61,11 @@ import Spoiler from './../../components/Spoiler.astro';
 
 Вот так, например, выглядит палитра цветов на странице [библиотеки material-ui](https://mui.com/material-ui/customization/color/),
 
-<TitledImage src="/public/design-tokens-in-storybook/material-ui-palette.png" alt="Цвета на сайте библиотеки material-ui"/>
+<TitledImage src="/design-tokens-in-storybook/material-ui-palette.png" alt="Цвета на сайте библиотеки material-ui"/>
 
 а вот так выглядят иконки на сайте библиотеки [ant-design](https://ant.design/components/icon).
 
-<TitledImage src="/public/design-tokens-in-storybook/ant-design-icons.png" alt="Иконки на сайте библиотеки ant-design"/>
+<TitledImage src="/design-tokens-in-storybook/ant-design-icons.png" alt="Иконки на сайте библиотеки ant-design"/>
 
 Ещё одним способом, который мне попался на глаза, было использование сторибука. Это казалось самым логичным выбором, особенно учитывая, что к тому времени в команде мы уже худо-бедно использовали сторибук. С его помощью мы пытались решить схожую проблему, но на уровне базовых UI-компонентов.
 
@@ -85,7 +85,7 @@ import Spoiler from './../../components/Spoiler.astro';
 
 Вот так, например, выглядит компонент ColorPallete.
 
-<TitledImage src="/public/design-tokens-in-storybook/ColorPallete.png" alt="Встроенный компонент ColorPallete в @storybook/blocks"/>
+<TitledImage src="/design-tokens-in-storybook/ColorPallete.png" alt="Встроенный компонент ColorPallete в @storybook/blocks"/>
 
 Но у этих компонентов довольно ограниченное применение, ведь это обычные React-компоненты. Например, как вам передать все ваши цвета в компонент ColorPalette, если вы используете CSS/LESS/SASS-переменные? Не копи-пастить же.
 
@@ -163,11 +163,11 @@ module.exports = {
 
 В сторибуке дизайн токены будут отображены вот так:
 
-<TitledImage src="/public/design-tokens-in-storybook/addon-in-storybook.png" alt="Отображает аддоны в сторибуке"/>
+<TitledImage src="/design-tokens-in-storybook/addon-in-storybook.png" alt="Отображает аддоны в сторибуке"/>
 
 Презентер – это UI-компонент, который умеет отображать дизайн токен. Например, один презентер умеет отображать цвет, второй – тень, третий – прозрачность и т.д.
 
-<TitledImage src="/public/design-tokens-in-storybook/presenters-in-addon.png" alt="Презентеры доступных в аддоне"/>
+<TitledImage src="/design-tokens-in-storybook/presenters-in-addon.png" alt="Презентеры доступных в аддоне"/>
 
 Тут могло показаться, что аддон мог бы сам сгруппировать токены и разобраться, где находятся цвета, где шрифты, а где бордеры и применить соответствующий токен.
 
@@ -183,7 +183,7 @@ module.exports = {
 <DesignTokenDocBlock categoryName="Colors" maxHeight="none" viewType="table" />
 ```
 
-<TitledImage src="/public/design-tokens-in-storybook/colors.png" alt="Использование компонента DesignTokenDocBlock на mdx страницах сторибука"/>
+<TitledImage src="/design-tokens-in-storybook/colors.png" alt="Использование компонента DesignTokenDocBlock на mdx страницах сторибука"/>
 
 У компонента `DesignTokenDocBlock`, есть одно преимущество, он поддерживает [кастомные презентеры](https://github.com/UX-and-I/storybook-design-token/tree/v3#custom-presenters), что позволяет:
 
@@ -198,7 +198,7 @@ module.exports = {
 
 Если мы пользуемся CSS‑переменными, мы можем налету обновлять их значения и увидеть как это повлияет на наш компонент.
 
-<TitledImage src="/public/design-tokens-in-storybook/demo.gif" alt="Изменение токенов сразу применяется к кнопке"/>
+<TitledImage src="/design-tokens-in-storybook/demo.gif" alt="Изменение токенов сразу применяется к кнопке"/>
 
 ### Принцип работы
 
@@ -212,7 +212,7 @@ module.exports = {
 
 Далее, когда сторибук запустился, файл `design-tokens.source.json` скачивается и отображается в виде таблицы или карточек.
 
-<TitledImage src="/public/design-tokens-in-storybook/how-addon-works.png" alt="Принцип работы аддона"/>
+<TitledImage src="/design-tokens-in-storybook/how-addon-works.png" alt="Принцип работы аддона"/>
 
 ### Ограничения
 
@@ -232,7 +232,7 @@ _Unknown word. You tried to parse Less with the standard CSS parser; try again w
 
 Ну было бы странно, если бы всё сразу же заработало. Оказывается в CSS [не поддерживаются однострочные комментарии](https://developer.mozilla.org/en-US/docs/Web/CSS/Comments) «`//`», поэтому PostCSS не может распарсить стили и валится с ошибкой. Благо, что в самом сообщении написано решение, поэтому [исправил очень быстро](https://github.com/UX-and-I/storybook-design-token/pull/97), правда вместо postcss‑less подошёл и postcss‑scss парсер. Идём дальше.
 
-<TitledImage src="/public/design-tokens-in-storybook/css-comments.png" alt="Исправление ошибки с комментариями"/>
+<TitledImage src="/design-tokens-in-storybook/css-comments.png" alt="Исправление ошибки с комментариями"/>
 
 ### SVG иконки
 
@@ -242,11 +242,11 @@ _Unknown word. You tried to parse Less with the standard CSS parser; try again w
 
 В общем, такой подход довольно сложно поддерживать, [поэтому это я тоже решил исправить](https://github.com/UX-and-I/storybook-design-token/pull/96/files). Ведь зачем нам аттрибуты, если у нас есть имя файла?
 
-<TitledImage src="/public/design-tokens-in-storybook/svg-icons.png" alt="Теперь svg иконки отображаются в сторибуке"/>
+<TitledImage src="/design-tokens-in-storybook/svg-icons.png" alt="Теперь svg иконки отображаются в сторибуке"/>
 
 И снова изменений одна строчка, а польза огромная.
 
-<TitledImage src="/public/design-tokens-in-storybook/svg-icons-fix.png" alt="Фикс для svg иконок"/>
+<TitledImage src="/design-tokens-in-storybook/svg-icons-fix.png" alt="Фикс для svg иконок"/>
 
 Кстати, SVG также можно разбивать на категории с помощью атрибута `data-token-category` и добавлять описание с `data-token-description`, не уверен, что очень полезно, но возможность такая есть.
 
@@ -261,17 +261,17 @@ _Unknown word. You tried to parse Less with the standard CSS parser; try again w
 
 В целом задачка немного посложнее, по крайней мере, нужно изменить не 2 строчки как в прошлый раз. Тут нам потребуется добавить новый парсер для иконок, который будет считывать _.png, _.jpeg, \*.gif файлы. Далее нужно конвертировать их в base64, чтобы добавить иконки в `design-tokens.source.json`, аналогично другим токенам.
 
-<TitledImage src="/public/design-tokens-in-storybook/how-images-integrated.png" alt="Схема реализации отображение растровых картинок"/>
+<TitledImage src="/design-tokens-in-storybook/how-images-integrated.png" alt="Схема реализации отображение растровых картинок"/>
 
 Отлично, [эта проблема также решена](https://github.com/UX-and-I/storybook-design-token/pull/110).
 
-<TitledImage src="/public/design-tokens-in-storybook/images.png" alt="Теперь растровые иконки также отображаются в аддоне"/>
+<TitledImage src="/design-tokens-in-storybook/images.png" alt="Теперь растровые иконки также отображаются в аддоне"/>
 
 ### Поиск
 
 В нашем проекте 2605 svg иконок и 1001 png иконка (я не поленился и посчитал), и без поиска отображать все эти иконки достаточно бесполезное занятие. Поэтому поиск[ также добавляем](https://github.com/UX-and-I/storybook-design-token/pull/109/).
 
-<TitledImage src="/public/design-tokens-in-storybook/search.png" alt="Добавлено поле поиска для дизайн токенов и иконок"/>
+<TitledImage src="/design-tokens-in-storybook/search.png" alt="Добавлено поле поиска для дизайн токенов и иконок"/>
 
 ### Кастомные презентеры
 
@@ -315,7 +315,7 @@ import { CircleColorPresenter } from './CircleColorPresenter';
 
 Выглядит это вот так:
 
-<TitledImage src="/public/design-tokens-in-storybook/custom-presenter.png" alt="Мы заменили стандартный презентер на кастомный"/>
+<TitledImage src="/design-tokens-in-storybook/custom-presenter.png" alt="Мы заменили стандартный презентер на кастомный"/>
 
 Здесь можно посмотреть [полную реализацию](https://github.com/UX-and-I/storybook-design-token/issues/116).
 

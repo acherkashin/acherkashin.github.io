@@ -15,7 +15,7 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Как вы уже поняли из названия - это вторая часть, описываемой системы. [В первой части](https://habr.com/ru/post/696416/) я подробно рассмотрел работу с инбоксом, вторая часть будет посвящена непосредственно "Управлению проектами". Обе части полностью независимы и могут читаться по отдельности, но я всё равно рекомендую с ознакомиться с первой частью и настроить один их способов наполнения инбокса.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image1.jpg" alt="Мем Где план управления проектом? Он здесь, в чертогах моего разума, видите я его перилистываю."/>
+<TitledImage src="/personal-planning-system-in-notion-2/image1.jpg" alt="Мем Где план управления проектом? Он здесь, в чертогах моего разума, видите я его перилистываю."/>
 
 Глоссарий
 
@@ -45,9 +45,9 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Чтобы начать использовать систему, необходимо[ открыть шаблон по ссылке](https://www.notion.so/3ec14cd2c1194e10811d101d7cec6d99) и нажать кнопку “Duplicate” и всё готово. Шаблон системы планирования скопируется в ваш Notion и вы можете начинать её использовать.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image2.png" alt="Кнопка 'Duplicate' для копирования шаблона"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image2.png" alt="Кнопка 'Duplicate' для копирования шаблона"/>
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image3.png" alt="Структура системы"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image3.png" alt="Структура системы"/>
 
 В моей системе планирования есть 4 основных страницы: Инбокс, Задачи, Проекты, Области. Инбокс был рассмотрен в [предыдущей статье](https://habr.com/ru/post/696416/), поэтому перейдём сразу к задачам.
 
@@ -71,7 +71,7 @@ import TitledImage from '../../components/TitledImage.astro';
 Моя база данных задач выглядит следующим образом.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image4.png" alt="База данных с задачами"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image4.png" alt="База данных с задачами"/>
 
 Теперь, давайте немного остановимся на каждом списке задач.
 
@@ -87,26 +87,26 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Как добавить задачу в список “на сегодня”? Как я уже сказал - все задачи хранятся в одной базе данных и мы с помощью фильтров, создаём отдельные представления. Для задач “на сегодня”, используется следующий фильтр:
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image5.png" alt="Фильтр списка задач на сегодня"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image5.png" alt="Фильтр списка задач на сегодня"/>
 
 То есть, если мы хотим, чтобы наша задача оказалась в списке, нам необходимо либо выставить текущую дату в поле "Due", либо выбрать значение "Current_"_ в поле "List".
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image6.png" alt="Списки"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image6.png" alt="Списки"/>
 
 
 Если мы не успели выполнить задачу сегодня, то она не исчезнет из списка, но индикатор состояния изменится, так что, вы легко увидите какие задачи просрочены.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image7.png" alt="Красный индикатор отображается для просроченной задачи"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image7.png" alt="Красный индикатор отображается для просроченной задачи"/>
 
 Как происходит разделение рабочих задач от личных? Это происходит с помощью поля Context, подробнее о нём мы поговорим немного позже. Вот так выглядит фильтр для представления “W.Today”. Этот фильтр отличается от “All Today” лишь наличием условия “Context Contains Work”.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image8.png" alt="Использование контекста 'Work' для фильтрации рабочих задач"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image8.png" alt="Использование контекста 'Work' для фильтрации рабочих задач"/>
 
 Если вы добавляете запись в представление с фильтром, то поля этой записи будут автоматически предзаполнены, чтобы удовлетворять данному фильтру. То есть, если мы находимся на странице “рабочих задач на сегодня” и хотим добавить новую рабочую задачу, в поле контекст автоматически будет добавлено значение “Work”. Новая задача будет выглядеть следующим образом.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image9.png" alt="Поля Context и Due предзаполнены"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image9.png" alt="Поля Context и Due предзаполнены"/>
 
 Как вы видите, чтобы удовлетворять фильтру, также было предзаполнено поле "Due", в него была выставлена текущая дата. Теперь давайте рассмотрим поле “Context”.
 
@@ -122,7 +122,7 @@ import TitledImage from '../../components/TitledImage.astro';
 
 В зависимости от контекста вы можете создавать новые представления в базе с задачами. Например, вы можете создать представление “Phone”. Скорее всего вы будете использовать его с телефона, поэтому удобнее будет использовать раскладку в виде списка с группировкой по полю List.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image10.png" alt="Представление Phone"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image10.png" alt="Представление Phone"/>
 
 
 Вы можете определить контекст на основе следующих критериев:
@@ -179,7 +179,7 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Допустим, вы бегаете раз в неделю в субботу утром. После очередной пробежки вместо того, чтобы изменить статус на Done, просто изменяете дату на следующую субботу. Если интервал повторения, например, 15 дней - вы смотрите на поле Next Due и выставляете его в поле Due.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image11.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-2/image11.png" alt=""/>
 
 #### Список завершённых задач
 
@@ -201,7 +201,7 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Список завершённых задач у меня выглядит следующим образом. Я использую представление календаря по полю “Complated At”.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image12.png" alt="Мой список завершённых задач"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image12.png" alt="Мой список завершённых задач"/>
 
 Ещё пару примеров использования Notion API можно найти в [официальном репозитории](https://github.com/makenotion/notion-sdk-js/tree/ccb2180648bdba19714c40897a6bfda1c506a71a/examples).
 
@@ -232,12 +232,12 @@ import TitledImage from '../../components/TitledImage.astro';
 Если вы просто нажмёте на кнопку “+” расположенную справа от представления "Backlog", то сразу заметите, что порядок колонок совершенно отличается.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image13.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-2/image13.png" alt=""/>
 
 
 Поэтому, лучше всего скопировать, например, представление "All Today" и внести необходимые вам изменения.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image14.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-2/image14.png" alt=""/>
 
 ### Проекты
 
@@ -250,7 +250,7 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Я в основном использую представление Board, потому что можно быстро увидеть полную картину проектов над которыми я работаю. Вот так выглядит моя доска с проектами.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image15.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-2/image15.png" alt=""/>
 
 #### Как добавить новый проект
 
@@ -266,7 +266,7 @@ import TitledImage from '../../components/TitledImage.astro';
 В моём шаблоне вы найдёте два первых шаблона. Сравнительно недавно в Notion появилась возможность выбирать “Шаблоны по-умолчанию”, то есть именно этот шаблон будет использоваться при создании нового проекта, если вы просто нажмёте на кнопку “New”. В моём случае это - Project Name.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image16.png" alt="Выбор шаблона по-умолчанию"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image16.png" alt="Выбор шаблона по-умолчанию"/>
 
 Теперь при нажатии на кнопку “New” у меня будет создаваться не пустой проект, а проект со всей необходимой структурой:
 
@@ -275,7 +275,7 @@ import TitledImage from '../../components/TitledImage.astro';
 * Секция для ресурсов/ссылок
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image17.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-2/image17.png" alt=""/>
 
 
 #### Добавление задачи в проект
@@ -283,11 +283,11 @@ import TitledImage from '../../components/TitledImage.astro';
 Мы уже обсуждали ранее, что при добавлении новой записи некоторые поля будут автоматически предзаполнены, если мы используем фильтры. Очевидно, в проекте должны отображаться задачи лишь этого проекта — для этого используется фильтр по проекту. Поэтому, если вам необходимо добавить задачу в проект — просто открываете страницу с проектом и добавляете задачу в нужный вам список, проект будет предзаполен автоматически.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image18.gif" alt="Добавление задачи в проект на странице проекта"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image18.gif" alt="Добавление задачи в проект на странице проекта"/>
 
 Но на самом деле, вы можете добавлять задачи в проект из любого списка задач. Скорее всего вы будете проводить большую часть времени на списке задач запланированных на сегодня, поэтому можете прям здесь же добавить задачу в список и заполнить проект самостоятельно.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image19.gif" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-2/image19.gif" alt=""/>
 
 Добавление задачи в проект из представления "All Today"
 
@@ -311,16 +311,16 @@ import TitledImage from '../../components/TitledImage.astro';
 Я не так активно использую страницу с Областями ответственности. В основном для группировки проектов и хранения заметок или какой-то другой информации. Например, все заметки по работе я складываю внутри области “Work”.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image20.png" alt="Страница области ответственности Work"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image20.png" alt="Страница области ответственности Work"/>
 
 Если вам необходимо посмотреть проекты сгруппированные по областям — вы можете или открыть представление Table в списоке областей
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image21.png" alt="Список областей с проектами"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image21.png" alt="Список областей с проектами"/>
 
 Или же список проектов с представлением “Group by Areas”.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image22.png" alt="Список проектов, сгруппированных по областям"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image22.png" alt="Список проектов, сгруппированных по областям"/>
 
 Подробнее о проектах и областях ответсвенности отлично рассказывается в статье [The PARA Method: A Universal System for Organizing Digital Information](https://fortelabs.com/blog/para/).
 
@@ -351,7 +351,7 @@ import TitledImage from '../../components/TitledImage.astro';
 Но чего точно не стоит делать - вести список задач на страницах задач (простите за каламбур). **Не нужно смешивать справочную информацию со списком задач.** Именно такую ошибку я допустил, когда использовал OneNote, я пытался разобраться с какой-то проблемой ⇒ создавал страницу ⇒ и писал туда всё подряд ⇒ задачи, заметки, какие-то выводы и заключения, к которым я пришёл. Ниже приведён пример такой страницы.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image23.png" alt="Смешивание информации со списком задач"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image23.png" alt="Смешивание информации со списком задач"/>
 
 Всё бы ничего, но как быстро понять открыв страницу, что требует каких-либо действий, а где справочная информация? Как отобразить эти задачи в общем списке задачи? Да никак.
 
@@ -365,7 +365,7 @@ import TitledImage from '../../components/TitledImage.astro';
 
 Как уже было отмечено в [предыдущей статье](https://habr.com/ru/post/696416/), после всей этой истории с санкциями и блокировкой аккаунтов, я настроил автоматизацию бэкапов и продолжил использовать Notion. К сожалению, официального способа автоматизировать бэкапы нет, всё, что предоставляет Notion -[ ручной экспорт всего вашего воркспейса](https://www.notion.so/help/back-up-your-data). Я решил уточнить и на всякий случай написал в поддержку.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image24.png" alt="Поддержка говорит, что нет поддержки автоматических бэкапов"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image24.png" alt="Поддержка говорит, что нет поддержки автоматических бэкапов"/>
 
 К сожалению, действительно, сейчас никакого способа автоматизированных бэкапов по расписанию не предусмотрено. Возможно, если каждый, кто прочитает статью напишет в поддержку и попросит добавить эту фичу, что-то изменится ?, поэтому если что писать можно сюда team@makenotion.com.
 
@@ -383,28 +383,28 @@ import TitledImage from '../../components/TitledImage.astro';
 Именно этот гитхаб проект я и использую. У меня много страниц с очень длинными названиями поэтому пайплайн валится при разархивировании, ругается, что слишком длинный путь.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image25.png" alt="Ошибка из-за длинного пути файлов"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image25.png" alt="Ошибка из-за длинного пути файлов"/>
 
 Я не стал заморачиваться и просто удалил разархивирование из пайплайна. Просто добавьте # перед &&.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image26.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-2/image26.png" alt=""/>
 
 
 Также я убрал когда ожидания скачивания бэкапа, это в любом случае не нужно, так как я не собираюсь его разархивировать.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image27.png" alt=""/>
+<TitledImage src="/personal-planning-system-in-notion-2/image27.png" alt=""/>
 
 
 Для меня это не так важно, ведь в любом случае ссылка на скачивание приходит на почту и хранится в течении 30 дней, поэтому если Notion заблокируют, я в любом случае смогу /скачать бэкап.
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image28.png" alt="Пример имейла, который приходит после того, как экспорт готов"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image28.png" alt="Пример имейла, который приходит после того, как экспорт готов"/>
 
 Если через какое-то время пайплайн падает с ошибкой 401 Unauthorized. Это значит, что вам пора обновить токен авторизации Notion по той же инструкции в статье. Мой пайплан проработал 3-4 месяца без обновления токена, так что вам не придётся это делать очень часто.
 
 
-<TitledImage src="/public/personal-planning-system-in-notion-2/image29.png" alt="Ошибка авторизации, когда токен устаревает"/>
+<TitledImage src="/personal-planning-system-in-notion-2/image29.png" alt="Ошибка авторизации, когда токен устаревает"/>
 
 
 ## Альтернативные шаблоны
