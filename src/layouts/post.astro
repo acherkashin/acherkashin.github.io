@@ -19,7 +19,7 @@ const { frontmatter } = Astro.props;
 		<PostContent>
 			<slot />
 		</PostContent>
-		<script async>
+		<script define:vars={{ articleId: frontmatter.id }}>
 			// Check if 'dark-mode' is set to 'true' in localStorage
 			const isDarkMode = localStorage.getItem('dark-mode') === 'true';
 
@@ -31,7 +31,7 @@ const { frontmatter } = Astro.props;
 			script.setAttribute('data-limit', '10');
 			script.setAttribute('data-colorful', '1');
 			script.setAttribute('data-dislikes', '1');
-			script.setAttribute('data-page-id', window.location.pathname); // Assuming Astro.url is equivalent to the current path
+			script.setAttribute('data-page-id', articleId);
 
 			// Conditionally add the data-dark attribute
 			if (isDarkMode) {
