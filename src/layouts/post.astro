@@ -7,7 +7,7 @@ const { frontmatter } = Astro.props;
 ---
 
 <Base head={{ title: frontmatter.title, description: frontmatter.description }}>
-	<div class="mx-auto w-full max-w-screen-md">
+	<div id="content" class="mx-auto w-full max-w-screen-md">
 		<PostHeader
 			title={frontmatter.title}
 			author={frontmatter.author}
@@ -16,12 +16,38 @@ const { frontmatter } = Astro.props;
 			pubDate={frontmatter.pubDate}
 			img={{ src: frontmatter.image.src, alt: frontmatter.image.alt }}
 		/>
-		<PostContent><slot /></PostContent>
+		<PostContent>
+			<slot />
+		</PostContent>
+		<script async>
+			// Check if 'dark-mode' is set to 'true' in localStorage
+			const isDarkMode = localStorage.getItem('dark-mode') === 'true';
+
+			// Create the script element
+			const script = document.createElement('script');
+			script.async = true;
+			script.src = 'https://comments.app/js/widget.js?3';
+			script.setAttribute('data-comments-app-website', '9p9QNro3');
+			script.setAttribute('data-limit', '10');
+			script.setAttribute('data-colorful', '1');
+			script.setAttribute('data-dislikes', '1');
+			script.setAttribute('data-page-id', window.location.pathname); // Assuming Astro.url is equivalent to the current path
+
+			// Conditionally add the data-dark attribute
+			if (isDarkMode) {
+				script.setAttribute('data-dark', '1');
+			}
+
+			// Append the script to the document head or body
+			document.getElementById('content').appendChild(script);
+		</script>
+		<!-- <script
+			async
+			src="https://comments.app/js/widget.js?3"
+			data-comments-app-website="9p9QNro3"
+			data-limit="10"
+			data-colorful="1"
+			data-dislikes="1"
+			data-page-id={Astro.url}></script> -->
 	</div>
-	<script
-		async
-		src="https://comments.app/js/widget.js?3"
-		data-comments-app-website="9p9QNro3"
-		data-limit="5"
-		data-page-id={Astro.url}></script>
 </Base>
