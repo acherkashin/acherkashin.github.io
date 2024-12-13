@@ -3,6 +3,7 @@ import Footer from '@/components/Footer.astro';
 import Navbar from '@/components/Navbar.astro';
 import { AppConfig } from '@/utils/AppConfig';
 import { YandexMetrika } from 'astro-yandex-metrika';
+import { ClientRouter } from 'astro:transitions';
 
 export interface Props {
 	head: {
@@ -24,25 +25,31 @@ const {
 		<meta name="description" content={description} />
 		<meta name="author" content={AppConfig.author} />
 
-    <link rel="sitemap" href="/sitemap-index.xml" />
+		<link rel="sitemap" href="/sitemap-index.xml" />
 		<link rel="alternate" type="application/rss+xml" href="/rss.xml" />
-    	<link rel="icon" href="/favicon.png">
+		<link rel="icon" href="/favicon.png" />
+		<ClientRouter />
 
-		<script>
-			if (
-				localStorage.getItem('dark-mode') === 'true' ||
-				(!('dark-mode' in localStorage) &&
-					window.matchMedia('(prefers-color-scheme: dark)').matches)
-			) {
-				localStorage.setItem('dark-mode', 'true');
-				document.querySelector('html')?.classList.add('dark');
-			} else {
-				localStorage.setItem('dark-mode', 'false');
-				document.querySelector('html')?.classList.remove('dark');
+		<script is:inline>
+			function applyTheme() {
+				if (
+					localStorage.getItem('dark-mode') === 'true' ||
+					(!('dark-mode' in localStorage) &&
+						window.matchMedia('(prefers-color-scheme: dark)').matches)
+				) {
+					localStorage.setItem('dark-mode', 'true');
+					document.querySelector('html')?.classList.add('dark');
+				} else {
+					localStorage.setItem('dark-mode', 'false');
+					document.querySelector('html')?.classList.remove('dark');
+				}
 			}
+
+			document.addEventListener('astro:after-swap', applyTheme);
+			applyTheme();
 		</script>
 
-		<YandexMetrika id="62071573"/>
+		<YandexMetrika id="62071573" />
 	</head>
 	<body
 		class="flex min-h-screen flex-col bg-stone-100 font-serif text-gray-950 dark:bg-stone-900 dark:text-white"
@@ -53,9 +60,8 @@ const {
 		</div>
 
 		<Footer />
-	</body>
+	</body><style is:global>
+		:root {
+		}
+	</style>
 </html>
-<style is:global>
-	:root {
-	}
-</style>
