@@ -23,7 +23,7 @@ import TitledImage from '../../components/TitledImage.astro';
 	- [Конфигурация Webpack](#конфигурация-webpack)
 	- [Интегрируем](#интегрируем)
 	- [Нельзя просто так взять и мигрировать](#нельзя-просто-так-взять-и-мигрировать)
-	- [Кастомный Typescript генератор](#кастомный-typescript-генератор)
+	- [Кастомный генератор типов](#кастомный-генератор-типов)
 	- [Управление состоянием — Zustand](#управление-состоянием--zustand)
 	- [Стили](#стили)
 - [Песочница](#песочница)
@@ -48,7 +48,7 @@ import TitledImage from '../../components/TitledImage.astro';
 
 ### Исходный стек
 
-Миграция началась примерно в 2019 году. Наш стек выглядел примерно так:
+Миграция началась примерно в 2019 году. Наш стек выглядел так:
 - [ASP.NET](http://ASP.NET) Core
 - JQuery
 - TypeScript c [пространства имён](https://www.typescriptlang.org/docs/handbook/namespaces.html) вместо ESM
@@ -74,7 +74,7 @@ namespace App.Components {
 	
 	export class ComboBox {
 		constructor(private props: ComboBoxProps) {
-			// создаём разметку и рендерим его в container
+			// создаём разметку и рендерим её в container
 			this.container.append(this.render());
 		}
 
@@ -168,7 +168,7 @@ export function findData(element: JQuery, dataName: string) {
 
 Дело в том, что в одном проекте нельзя использовать одновременно неймспейсы и ES-модули. Никакого инструмента для авто-конвертации тоже нет. Команда [TypeScript писала внутренний инструмент](https://devblogs.microsoft.com/typescript/typescripts-migration-to-modules/) для конвертации кодовой базы TypeScript'а (TypeScript написан на TypeScript'е!) на модули на основе AST.
 
-В общем, не получится просто взять и добавить React в тот же проект. И у нас было 2 варианта:
+В общем, не получалось просто взять и добавить React в существующий проект.  нас было 2 варианта:
 1. Переписываем существующий код на ES-модули и интегрируем React
 2. Создать отдельный проект, где писать будем только на реакте. Никакого JQuery!
 
@@ -310,14 +310,14 @@ myLib.renderAppHeader(document.getElementById('header-container'), {
 Манифест выглядит примерно вот так (на реальном проекте он будет намного больше):
 ```json
 {
-  "lib.js": "./lib.ee28b5fb.js",
-  "react-dom.js": "./react-dom.bb6590f2.js",
-  "account-dialog.js": "./account-dialog.5333e5e6.js",
+  "lib.js": "./lib.016f9cc5.js",
+  "app-header.js": "./app-header.3d395df7.js",
+  "react-dom.js": "./react-dom.491b536c.js",
   "index.html": "./index.html"
 }
 ```
 
-Он содержит название нашего основного бандла `my-lib.js` и путь с самому файлу `./my-lib.ee28b5fb.js `. С помощью манифеста мы можем считать название основного бандла и подгрузить его.
+Он содержит название нашего основного бандла `lib.js` и путь с самому файлу `./lib.016f9cc5.js `. С помощью манифеста мы можем получить название основного бандла и подгрузить его.
 
 
 ```csharp
@@ -341,7 +341,7 @@ myLib.renderAppHeader(document.getElementById('header-container'), {
 
 ### Нельзя просто так взять и мигрировать
 
-К сожалению, от легаси "не спрятаться не скрыться, ...". Например, иногда приходится использовать сложный компонент написанный на JQuery внутри React компонента.
+К сожалению, от легаси «не спрятаться не скрыться, ...». Например, иногда приходится использовать сложный компонент написанный на JQuery внутри React компонента.
 
 <TitledImage src="/migration-from-jquery-to-react/boromir-meme.png" alt=""/>
 
@@ -352,6 +352,7 @@ function Calendar(props: CalendarProps) {
 	const ref = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
+		// компонент из существующего проекта, написанный на JQuery
 		Components.Common.createCalendar({
 			container: ref.current,
 			...props
@@ -362,7 +363,7 @@ function Calendar(props: CalendarProps) {
 }
 ```
 
-### Кастомный Typescript генератор
+### Кастомный генератор типов
 
 Теперь можно сказать, что всё работает и мы можем использовать нашу библиотеку в существующем проекте. Но про кое-что мы забыли. Мы забыли про типы! 
 
