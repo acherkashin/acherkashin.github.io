@@ -8,9 +8,13 @@ const { count } = Astro.props;
 
 <div id="snow-container" aria-hidden="true">
 	{
-		new Array(count).fill(0).map((_) => (
+		new Array(count).fill(0).map((_, index) => (
 			<div class="snowflake text-sky-500 dark:text-white">
-				<div class="snowflake__inner">❄</div>
+				<div class="snowflake__inner">
+                    {index % 3 === 0 && '❄'}
+                    {index % 3 === 1 && '❅'}
+                    {index % 3 === 2 && '❆'}
+                </div>
 			</div>
 		))
 	}
