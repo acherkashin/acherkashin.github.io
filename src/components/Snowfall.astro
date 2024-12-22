@@ -11,27 +11,33 @@ const { count } = Astro.props;
 		new Array(count).fill(0).map((_, index) => (
 			<div class="snowflake text-sky-500 dark:text-white">
 				<div class="snowflake__inner">
-                    {index % 3 === 0 && '❄'}
-                    {index % 3 === 1 && '❅'}
-                    {index % 3 === 2 && '❆'}
-                </div>
+					{index % 3 === 0 && '❄'}
+					{index % 3 === 1 && '❅'}
+					{index % 3 === 2 && '❆'}
+				</div>
 			</div>
 		))
 	}
 </div>
-<script is:inline defer>
-	document.addEventListener('astro:page-load', () => {
-		const snowflakes = document.querySelectorAll('.snowflake');
+<script>
+	import { isNewYear } from '@/utils/newYearUtils';
 
-		function getRndInteger(min, max) {
+	document.addEventListener('astro:page-load', () => {
+		if (!isNewYear()) {
+			document.getElementById('snow-container')?.remove();
+		}
+
+		const snowflakes = document.querySelectorAll('.snowflake') as NodeListOf<HTMLElement>;
+
+		function getRndInteger(min: number, max: number) {
 			return Math.floor(Math.random() * (max - min + 1)) + min;
 		}
 
-		function getRndFloat(min, max) {
+		function getRndFloat(min: number, max: number) {
 			return (Math.random() * (max - min) + min).toFixed(1);
 		}
 
-		snowflakes.forEach((snowflake) => {
+		snowflakes.forEach((snowflake: HTMLElement) => {
 			snowflake.style.fontSize = getRndFloat(0.7, 1.5) + 'em';
 			snowflake.style.animationDuration = getRndInteger(10, 30) + 's';
 			snowflake.style.animationDelay = getRndInteger(-1, snowflakes.length / 4) + 's';
