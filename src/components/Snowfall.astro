@@ -16,20 +16,22 @@ const { count } = Astro.props;
 	}
 </div>
 <script is:inline defer>
-	const snowflakes = document.querySelectorAll('.snowflake');
+	document.addEventListener('astro:page-load', () => {
+		const snowflakes = document.querySelectorAll('.snowflake');
 
-	function getRndInteger(min, max) {
-		return Math.floor(Math.random() * (max - min + 1)) + min;
-	}
+		function getRndInteger(min, max) {
+			return Math.floor(Math.random() * (max - min + 1)) + min;
+		}
 
-	function getRndFloat(min, max) {
-		return (Math.random() * (max - min) + min).toFixed(1);
-	}
+		function getRndFloat(min, max) {
+			return (Math.random() * (max - min) + min).toFixed(1);
+		}
 
-	snowflakes.forEach((snowflake) => {
-		snowflake.style.fontSize = getRndFloat(0.7, 1.5) + 'em';
-		snowflake.style.animationDuration = getRndInteger(10, 30) + 's';
-		snowflake.style.animationDelay = getRndInteger(-1, snowflakes.length / 4) + 's';
+		snowflakes.forEach((snowflake) => {
+			snowflake.style.fontSize = getRndFloat(0.7, 1.5) + 'em';
+			snowflake.style.animationDuration = getRndInteger(10, 30) + 's';
+			snowflake.style.animationDelay = getRndInteger(-1, snowflakes.length / 4) + 's';
+		});
 	});
 </script>
 <style is:global>
