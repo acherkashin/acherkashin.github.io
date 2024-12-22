@@ -6,11 +6,14 @@ import LatestPosts from '@/components/LatestPosts.astro';
 import AllProjects from '@/components/AllProjects.astro';
 import { sortPostsByDate } from '@/utils/data.util';
 import { MarkdownInstance, MDXInstance } from 'astro';
+import Snowfall from '@/components/Snowfall.astro';
 
 const { title } = AppConfig;
 const { description } = AppConfig;
 
-const allPosts = await Astro.glob<MDXInstance<any> | MarkdownInstance<any>>('./articles/*.(md|mdx)');
+const allPosts = await Astro.glob<MDXInstance<any> | MarkdownInstance<any>>(
+	'./articles/*.(md|mdx)'
+);
 allPosts.sort(sortPostsByDate);
 const latestPosts = allPosts.slice(0, 3);
 ---
@@ -19,4 +22,5 @@ const latestPosts = allPosts.slice(0, 3);
 	<!-- <Hero /> -->
 	<LatestPosts posts={latestPosts} />
 	<AllProjects />
+	<Snowfall />
 </Base>

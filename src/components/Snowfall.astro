@@ -1,0 +1,79 @@
+---
+
+---
+
+<div id="snow-container" aria-hidden="true"></div>
+<script is:inline defer>
+	const snowContainer = document.getElementById('snow-container');
+
+	function createSnowflake() {
+		const snowflake = document.createElement('div');
+		snowflake.classList.add('snowflake');
+        // '❄ ❅ ❆'
+		snowflake.textContent = '❄';
+
+		const size = Math.random() * 20 + 10; // Размер снежинки от 10 до 30px
+		const leftPosition = Math.random() * window.innerWidth; // Случайная позиция по ширине
+		const duration = Math.random() * 3 + 10; // Скорость падения (3-6 секунд)
+		const delay = Math.random() * 5; // Задержка анимации
+
+		snowflake.style.left = `${leftPosition}px`;
+		snowflake.style.fontSize = `${size}px`;
+		snowflake.style.animationDuration = `${duration}s`;
+		snowflake.style.animationDelay = `${delay}s`;
+
+		snowContainer.appendChild(snowflake);
+
+		// Удаляем снежинку после окончания анимации
+		snowflake.addEventListener('animationend', () => {
+			snowflake.remove();
+		});
+	}
+
+	for (let i = 0; i < 10; i++) {
+		createSnowflake();
+	}
+
+	// Создаем снежинки каждые 500 мс
+	setInterval(createSnowflake, 500);
+</script>
+<style is:global>
+	body {
+		/* margin: 0;
+		padding: 0; */
+		/* background: linear-gradient(to bottom, #001f3f, #0074d9); */
+		/* font-family: Arial, sans-serif; */
+	}
+
+	#snow-container {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none; /* Чтобы не мешало взаимодействию с элементами */
+        z-index: -1;
+	}
+
+	.snowflake {
+		position: absolute;
+		top: -50px;
+		/* TODO: сделать снежинки голубыми для светлой темы */
+		color: white;
+		font-size: 10px;
+		opacity: 0.6;
+		animation-name: fall;
+		animation-timing-function: linear; /*ease-in-out*/
+		animation-iteration-count: infinite;
+		will-change: transform;
+	}
+
+	@keyframes fall {
+		from {
+			transform: translateY(0) rotate(0deg);
+		}
+		to {
+			transform: translateY(calc(100vh + 1.5em)) rotate(360deg);
+		}
+	}
+</style>
