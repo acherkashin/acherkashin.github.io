@@ -1,0 +1,371 @@
+---
+import Demo from '@/layouts/Demo.astro';
+---
+
+<Demo head={{ title: 'Telegram Stories Demo', description: 'Interactive demo of Telegram-style stories with scroll animations' }}>
+
+<style>
+        :root {
+            --story-size: 64px;
+            --stories-height: 100px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            position: relative;
+            height: 100vh;
+            overflow-y: auto;
+            scroll-snap-type: y proximity;
+            background-color: #ffffff;
+        }
+
+        /* Create snap points at specific scroll positions */
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            scroll-snap-align: start;
+            z-index: -1;
+        }
+
+        .container::after {
+            content: "";
+            position: absolute;
+            top: var(--stories-height);
+            left: 0;
+            width: 100%;
+            height: 1px;
+            scroll-snap-align: start;
+            z-index: -1;
+        }
+
+        .stories-list {
+            display: flex;
+            flex-direction: row;
+            position: sticky;
+            top: 0;
+            padding: 8px;
+            justify-content: center;
+            width: 100%;
+            background-color: #ffffff;
+            z-index: 100;
+            border-bottom: 1px solid #e1e4e8;
+            /* overflow-x: auto; */
+        }
+
+        .story {
+            --story-size: 64px;
+            /* это финальные значения анимации */
+
+            /* position: relative; */
+            border-radius: 50%;
+            background: #007aff;
+            border: none;
+            padding: 3px;
+            flex-shrink: 0;
+
+            animation: storyAnimation cubic-bezier(.71, .36, .14, .91);
+            animation-fill-mode: both;
+            animation-timeline: scroll();
+            animation-range: 0 var(--stories-height);
+        }
+
+        .story-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid #ffffff;
+        }
+
+        .story:nth-child(1) .story-avatar {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23ff6b6b"/><path d="M50 20 L58 42 L82 42 L64 58 L72 80 L50 66 L28 80 L36 58 L18 42 L42 42 Z" fill="white"/></svg>');
+        }
+
+        .story:nth-child(2) .story-avatar {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%234ecdc4"/><path d="M50 25 C58 25 65 32 65 40 C65 48 58 55 50 65 C42 55 35 48 35 40 C35 32 42 25 50 25 Z" fill="white"/></svg>');
+        }
+
+        .story:nth-child(3) .story-avatar {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%2345b7d1"/><path d="M50 20 L70 50 L50 80 L30 50 Z" fill="white"/></svg>');
+        }
+
+        .story:nth-child(1) {
+            margin-left: 0 !important;
+        }
+
+        @keyframes storyAnimation {
+            0% {
+                width: var(--story-size);
+                height: var(--story-size);
+                margin-left: 20px;
+            }
+
+            33% {
+                margin-top: 0;
+                margin-left: 10px;
+            }
+
+            50% {
+                margin-top: 0;
+            }
+
+            66% {
+                margin-top: calc(attr(data-index px) * 12);
+            }
+
+            100% {
+                width: calc(var(--story-size) * 0.4);
+                height: calc(var(--story-size) * 0.4);
+                margin-left: calc(var(--story-size) * -0.2);
+            }
+        }
+
+        .contacts-list {
+            /* когда мы скролим нужно добавить animation-timeline чтобы первые 100px контент также двигался и только после этого начал скролиться */
+            min-height: 200vh;
+            width: 100%;
+            background-color: #ffffff;
+
+            animation: scrollAnimation linear;
+            animation-timeline: scroll();
+            animation-range: 0 var(--stories-height);
+            animation-fill-mode: both;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            background-color: #ffffff;
+            transition: background-color 0.1s ease;
+            cursor: pointer;
+        }
+
+        .contact-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .contact-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .contact-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .contact-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #000000;
+            margin: 0 0 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contact-message {
+            font-size: 14px;
+            color: #8e8e93;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contact-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+
+        .contact-time {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-bottom: 4px;
+        }
+
+        .contact-unread {
+            background-color: #007aff;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        @keyframes scrollAnimation {
+            from {
+                margin-top: 0;
+            }
+
+            to {
+                margin-top: var(--stories-height);
+            }
+        }
+</style>
+
+<div class="container">
+        <div class="stories-list">
+            <div class="story" data-index="0">
+                <div class="story-avatar"></div>
+            </div>
+            <div class="story" data-index="1">
+                <div class="story-avatar"></div>
+            </div>
+            <div class="story" data-index="2">
+                <div class="story-avatar"></div>
+            </div>
+        </div>
+        <div class="contacts-list">
+            <div class="contact-item">
+                <div class="contact-avatar"
+                    style="background-image: url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;%23007aff&quot;/><circle cx=&quot;35&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><circle cx=&quot;65&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><path d=&quot;M30 65 Q50 75 70 65&quot; stroke=&quot;white&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot;/></svg>')">
+                </div>
+                <div class="contact-info">
+                    <h3 class="contact-name">Alice Johnson</h3>
+                    <p class="contact-message">Hey! How are you doing today?</p>
+                </div>
+                <div class="contact-meta">
+                    <span class="contact-time">14:23</span>
+                    <span class="contact-unread">2</span>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-avatar"
+                    style="background-image: url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;%23ff6b6b&quot;/><circle cx=&quot;35&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><circle cx=&quot;65&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><path d=&quot;M30 62 Q50 72 70 62&quot; stroke=&quot;white&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot;/></svg>')">
+                </div>
+                <div class="contact-info">
+                    <h3 class="contact-name">Bob Smith</h3>
+                    <p class="contact-message">Can we meet tomorrow at 3 PM?</p>
+                </div>
+                <div class="contact-meta">
+                    <span class="contact-time">13:45</span>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-avatar"
+                    style="background-image: url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;%234ecdc4&quot;/><circle cx=&quot;35&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><circle cx=&quot;65&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><path d=&quot;M30 68 Q50 78 70 68&quot; stroke=&quot;white&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot;/></svg>')">
+                </div>
+                <div class="contact-info">
+                    <h3 class="contact-name">Carol Davis</h3>
+                    <p class="contact-message">Thanks for the help with the project!</p>
+                </div>
+                <div class="contact-meta">
+                    <span class="contact-time">12:30</span>
+                    <span class="contact-unread">1</span>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-avatar"
+                    style="background-image: url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;%2345b7d1&quot;/><circle cx=&quot;35&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><circle cx=&quot;65&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><path d=&quot;M30 64 Q50 74 70 64&quot; stroke=&quot;white&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot;/></svg>')">
+                </div>
+                <div class="contact-info">
+                    <h3 class="contact-name">David Wilson</h3>
+                    <p class="contact-message">Let's grab coffee this weekend</p>
+                </div>
+                <div class="contact-meta">
+                    <span class="contact-time">11:15</span>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-avatar"
+                    style="background-image: url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;%23f9ca24&quot;/><circle cx=&quot;35&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><circle cx=&quot;65&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><path d=&quot;M30 66 Q50 76 70 66&quot; stroke=&quot;white&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot;/></svg>')">
+                </div>
+                <div class="contact-info">
+                    <h3 class="contact-name">Emma Thompson</h3>
+                    <p class="contact-message">The meeting went really well!</p>
+                </div>
+                <div class="contact-meta">
+                    <span class="contact-time">10:45</span>
+                    <span class="contact-unread">3</span>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-avatar"
+                    style="background-image: url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;%23a55eea&quot;/><circle cx=&quot;35&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><circle cx=&quot;65&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><path d=&quot;M30 63 Q50 73 70 63&quot; stroke=&quot;white&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot;/></svg>')">
+                </div>
+                <div class="contact-info">
+                    <h3 class="contact-name">Frank Miller</h3>
+                    <p class="contact-message">Don't forget about tomorrow's call</p>
+                </div>
+                <div class="contact-meta">
+                    <span class="contact-time">09:30</span>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-avatar"
+                    style="background-image: url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;%2326de81&quot;/><circle cx=&quot;35&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><circle cx=&quot;65&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><path d=&quot;M30 67 Q50 77 70 67&quot; stroke=&quot;white&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot;/></svg>')">
+                </div>
+                <div class="contact-info">
+                    <h3 class="contact-name">Grace Lee</h3>
+                    <p class="contact-message">Great work on the presentation!</p>
+                </div>
+                <div class="contact-meta">
+                    <span class="contact-time">Yesterday</span>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-avatar"
+                    style="background-image: url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;%23fd79a8&quot;/><circle cx=&quot;35&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><circle cx=&quot;65&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><path d=&quot;M30 65 Q50 75 70 65&quot; stroke=&quot;white&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot;/></svg>')">
+                </div>
+                <div class="contact-info">
+                    <h3 class="contact-name">Henry Brown</h3>
+                    <p class="contact-message">See you at the conference next week</p>
+                </div>
+                <div class="contact-meta">
+                    <span class="contact-time">Yesterday</span>
+                    <span class="contact-unread">5</span>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="contact-avatar"
+                    style="background-image: url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;%2300b894&quot;/><circle cx=&quot;35&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><circle cx=&quot;65&quot; cy=&quot;40&quot; r=&quot;6&quot; fill=&quot;white&quot;/><path d=&quot;M30 69 Q50 79 70 69&quot; stroke=&quot;white&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot; stroke-linecap=&quot;round&quot;/></svg>')">
+                </div>
+                <div class="contact-info">
+                    <h3 class="contact-name">Ivy Chen</h3>
+                    <p class="contact-message">The documents are ready for review</p>
+                </div>
+                <div class="contact-meta">
+                    <span class="contact-time">Monday</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<script>
+    document.documentElement.scrollTop = 0; // For the page
+    // OR for a specific scrollable element
+    const container = document.getElementsByClassName('container')[0] as HTMLElement;
+    if (container) {
+        container.scrollTop = 100;
+    }
+</script>
+</Demo>
