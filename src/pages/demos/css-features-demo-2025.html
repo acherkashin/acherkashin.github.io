@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>CSS Next Demo with Theme Switch</title>
+  <style>
+    /* Функция для смешивания цвета с белым */
+    @function --tint(--c, --pct) {
+      result: color-mix(in srgb, var(--c), white var(--pct));
+    }
+
+    :root {
+      --theme: light;
+
+      --brand: if(style(--theme: dark): #0d6efd;
+          style(--theme: light): #6750a4;
+          else: #6750a4);
+    }
+
+    .btn {
+      border: 1px solid color-mix(in srgb, var(--brand), black 20%);
+    }
+
+    @scope (.card) {
+      .btn {
+        background: --tint(color-mix(in srgb, var(--brand), green 80%), 20%);
+      }
+    }
+
+    @layer components {
+      .btn {
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        background: --tint(var(--brand), 20%);
+        color: if(style(--theme: dark): white;
+            style(--theme: light): black;
+            else: black);
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: --tint(var(--brand), 10%);
+        }
+
+        &:is(:disabled, [aria-disabled="true"]) {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        :has(&:focus-visible) {
+          outline: 2px solid color-mix(in srgb, var(--brand) 70%, black);
+          outline-offset: 2px;
+        }
+      }
+    }
+
+
+    body {
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: color-mix(in srgb, var(--brand), white 80%);
+      transition: background 0.3s ease;
+    }
+
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+      text-align: center;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h2>CSS Next Demo</h2>
+    <p>Кнопки с современными CSS-фичами:</p>
+    <button class="btn">Обычная</button>
+    <button class="btn" disabled>Выключена</button>
+    <hr style="margin: 2rem 0;">
+  </div>
+  <button id="themeToggle" class="btn">Сменить тему</button>
+
+  <script>
+    const root = document.documentElement;
+    const toggleBtn = document.getElementById('themeToggle');
+
+    toggleBtn.addEventListener('click', () => {
+      const current = getComputedStyle(root).getPropertyValue('--theme').trim();
+      const next = current === 'light' ? 'dark' : 'light';
+      root.style.setProperty('--theme', next);
+      toggleBtn.textContent = `Сменить тему (сейчас ${next})`;
+    });
+  </script>
+</body>
+
+</html>
