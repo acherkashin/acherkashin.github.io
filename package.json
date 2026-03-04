@@ -7,7 +7,15 @@
 		"start": "astro dev",
 		"build": "astro check && astro build",
 		"preview": "astro preview",
-		"astro": "astro"
+		"astro": "astro",
+		"telegram:session": "node scripts/telegram/generate-session.js",
+		"telegram:export:all": "node scripts/telegram/export-channel-posts.js --all --output .telegram-export",
+		"telegram:export:week": "node scripts/telegram/export-channel-posts.js --days 7 --output .telegram-export",
+		"telegram:convert": "node scripts/telegram/convert-export-to-markdown.js --input .telegram-export",
+		"telegram:sync:bootstrap": "node scripts/telegram/sync-to-astro.js --mode bootstrap",
+		"telegram:sync:week": "node scripts/telegram/sync-to-astro.js --mode week --days 7",
+		"telegram:pipeline:bootstrap": "npm run telegram:export:all && npm run telegram:convert && npm run telegram:sync:bootstrap",
+		"telegram:pipeline:week": "npm run telegram:export:week && npm run telegram:convert && npm run telegram:sync:week"
 	},
 	"dependencies": {
 		"@astrojs/check": "^0.9.4",
@@ -34,6 +42,7 @@
 		"@tailwindcss/typography": "^0.5.10",
 		"prettier": "^3.1.1",
 		"prettier-plugin-astro": "^0.14.0",
-		"prettier-plugin-tailwindcss": "^0.6.0"
+		"prettier-plugin-tailwindcss": "^0.6.0",
+		"telegram": "^2.26.22"
 	}
 }
