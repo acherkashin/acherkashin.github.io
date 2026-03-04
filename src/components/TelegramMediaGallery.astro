@@ -57,11 +57,14 @@ const buildRows = () => {
 };
 
 const rows = buildRows();
+
+// Serialize media array for JavaScript
+const mediaJson = JSON.stringify(media);
 ---
 
 {mode === 'grid' ? (
   <!-- Smart Grid Layout -->
-  <div class="flex flex-col gap-2" id="telegram-media-gallery">
+  <div class="flex flex-col gap-2" id="telegram-media-gallery" data-media={mediaJson}>
     {rows.map((row, rowIndex) => (
       <div class={`grid gap-2 grid-cols-${row.length}`} style={`grid-template-columns: repeat(${row.length}, minmax(0, 1fr))`}>
         {row.map((src, colIndex) => {
@@ -81,6 +84,7 @@ const rows = buildRows();
                 <button
                   class="lightbox-trigger h-full w-full cursor-zoom-in"
                   data-index={mediaIndex}
+                  data-type="image"
                   type="button"
                   aria-label={`View image ${mediaIndex + 1}`}
                 >
@@ -102,14 +106,14 @@ const rows = buildRows();
   <!-- Lightbox Modal -->
   <div 
     id="image-lightbox" 
-    class="fixed inset-0 z-50 hidden items-center justify-center bg-black/95 p-4"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-black/95"
     role="dialog"
     aria-modal="true"
     aria-label="Image viewer"
   >
     <button
       id="close-lightbox"
-      class="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+      class="absolute right-2 top-2 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
       aria-label="Close"
     >
       <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -117,34 +121,47 @@ const rows = buildRows();
       </svg>
     </button>
 
-    <div class="flex h-full w-full flex-col">
-      <!-- Main Image -->
-      <div class="flex flex-1 items-center justify-center">
-        <img
-          id="lightbox-image"
-          src=""
-          alt=""
-          class="max-h-full max-w-full object-contain"
-        />
+    <div class="flex h-full w-full flex-col gap-2 p-2 pt-14">
+      <!-- Main Media Container -->
+      <div class="flex flex-1 items-center justify-center overflow-hidden min-h-0">
+        <div id="lightbox-media-container" class="max-h-full max-w-full flex">
+          <!-- Media will be dynamically inserted here -->
+        </div>
       </div>
 
       <!-- Thumbnails -->
-      {media.filter(src => !isVideo(src)).length > 1 && (
-        <div class="mt-4 flex justify-center gap-2 overflow-x-auto pb-4">
+      {media.length > 1 && (
+        <div class="flex justify-center gap-2 overflow-x-auto pb-2 flex-shrink-0">
           {media.map((src, index) => (
-            !isVideo(src) && (
-              <button
-                class="lightbox-thumb h-16 w-16 flex-shrink-0 overflow-hidden rounded border-2 border-transparent hover:border-white"
-                data-index={index}
-                type="button"
-              >
+            <button
+              class="lightbox-thumb h-16 w-16 flex-shrink-0 overflow-hidden rounded border-2 border-transparent hover:border-white relative"
+              data-index={index}
+              type="button"
+              aria-label={`View media ${index + 1}`}
+            >
+              {isVideo(src) ? (
+                <>
+                  <video
+                    src={src}
+                    class="h-full w-full object-cover pointer-events-none"
+                    preload="metadata"
+                  >
+                    <track kind="captions" />
+                  </video>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <svg class="h-6 w-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </>
+              ) : (
                 <img
                   src={src}
                   alt={`Thumbnail ${index + 1}`}
                   class="h-full w-full object-cover"
                 />
-              </button>
-            )
+              )}
+            </button>
           ))}
         </div>
       )}
@@ -159,14 +176,26 @@ const rows = buildRows();
           <div class="carousel-item min-w-full snap-center">
             <div class="relative overflow-hidden rounded-lg">
               {isVideo(src) ? (
-                <video
-                  src={src}
-                  controls
-                  class="h-full w-full object-cover"
-                  preload="metadata"
+                <button
+                  class="lightbox-trigger h-full w-full cursor-pointer relative"
+                  data-index={index}
+                  data-type="video"
+                  type="button"
+                  aria-label={`View video ${index + 1}`}
                 >
-                  <track kind="captions" />
-                </video>
+                  <video
+                    src={src}
+                    class="h-full w-full object-cover pointer-events-none"
+                    preload="metadata"
+                  >
+                    <track kind="captions" />
+                  </video>
+                  <div class="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors">
+                    <svg class="h-16 w-16 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </button>
               ) : (
                 <img
                   src={src}
@@ -219,11 +248,16 @@ const rows = buildRows();
 </style>
 
 <script>
+  // Track if lightbox has been initialized to prevent duplicates
+  let lightboxInitialized = false;
+
   // Carousel functionality (only if carousel mode is used)
-  const container = document.querySelector('.carousel-container');
-  const dots = document.querySelectorAll('.carousel-dot');
-  
-  if (container && dots.length > 0) {
+  function initializeCarousel() {
+    const container = document.querySelector('.carousel-container');
+    const dots = document.querySelectorAll('.carousel-dot');
+    
+    if (!container || dots.length === 0) return;
+    
     const updateActiveDot = () => {
       const scrollLeft = container.scrollLeft;
       const itemWidth = container.scrollWidth / dots.length;
@@ -254,31 +288,64 @@ const rows = buildRows();
   }
 
   // Lightbox functionality
-  const lightbox = document.getElementById('image-lightbox');
-  const lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement;
-  const closeLightbox = document.getElementById('close-lightbox');
-  const triggers = document.querySelectorAll('.lightbox-trigger');
-  const thumbs = document.querySelectorAll('.lightbox-thumb');
-  const gallery = document.getElementById('telegram-media-gallery');
+  function initializeLightbox() {
+    const gallery = document.getElementById('telegram-media-gallery');
 
-  if (lightbox && lightboxImage && gallery) {
-    const images: string[] = [];
+    // Exit if gallery doesn't exist or already initialized
+    if (!gallery || lightboxInitialized) return;
     
-    // Collect all image sources
-    gallery.querySelectorAll('img').forEach(img => {
-      if (img.src) images.push(img.src);
-    });
+    // Mark as initialized
+    lightboxInitialized = true;
+
+    // Get media array from data attribute
+    const mediaData = gallery.getAttribute('data-media');
+    if (!mediaData) return;
+    
+    const media: string[] = JSON.parse(mediaData);
+    
+    // If no media found, exit
+    if (media.length === 0) return;
 
     let currentIndex = 0;
 
-    const showImage = (index: number) => {
-      if (index >= 0 && index < images.length) {
+    const isVideo = (src: string) => {
+      return src.match(/\.(mp4|webm|ogg)$/i);
+    };
+
+    const showMedia = (index: number) => {
+      if (index >= 0 && index < media.length) {
         currentIndex = index;
-        lightboxImage.src = images[index];
-        lightboxImage.alt = `Image ${index + 1} of ${images.length}`;
+        
+        const container = document.getElementById('lightbox-media-container');
+        if (!container) return;
+        
+        const src = media[index];
+        const mediaType = isVideo(src) ? 'video' : 'image';
+        
+        // Clear container and create new element
+        container.innerHTML = '';
+        
+        if (mediaType === 'video') {
+          const video = document.createElement('video');
+          video.src = src;
+          video.controls = true;
+          video.autoplay = true;
+          video.className = 'max-h-full max-w-full object-contain';
+          const track = document.createElement('track');
+          track.kind = 'captions';
+          video.appendChild(track);
+          container.appendChild(video);
+        } else {
+          const img = document.createElement('img');
+          img.src = src;
+          img.alt = `Media ${index + 1} of ${media.length}`;
+          img.className = 'max-h-full max-w-full object-contain';
+          container.appendChild(img);
+        }
         
         // Update active thumbnail
-        thumbs.forEach((thumb, i) => {
+        const thumbs = document.querySelectorAll('.lightbox-thumb');
+        thumbs.forEach((thumb) => {
           const thumbIndex = parseInt(thumb.getAttribute('data-index') || '0');
           if (thumbIndex === index) {
             thumb.classList.add('active');
@@ -290,17 +357,24 @@ const rows = buildRows();
     };
 
     const openLightbox = (index: number) => {
-      showImage(index);
+      const lightbox = document.getElementById('image-lightbox');
+      if (!lightbox) return;
+      
+      showMedia(index);
       lightbox.classList.add('show');
       document.body.style.overflow = 'hidden';
     };
 
     const closeLightboxFn = () => {
+      const lightbox = document.getElementById('image-lightbox');
+      if (!lightbox) return;
+      
       lightbox.classList.remove('show');
       document.body.style.overflow = '';
     };
 
-    // Open lightbox on trigger click
+    // Attach event listeners to triggers
+    const triggers = document.querySelectorAll('.lightbox-trigger');
     triggers.forEach(trigger => {
       trigger.addEventListener('click', (e) => {
         e.preventDefault();
@@ -310,34 +384,59 @@ const rows = buildRows();
     });
 
     // Thumbnail navigation
+    const thumbs = document.querySelectorAll('.lightbox-thumb');
     thumbs.forEach(thumb => {
       thumb.addEventListener('click', () => {
         const index = parseInt(thumb.getAttribute('data-index') || '0');
-        showImage(index);
+        showMedia(index);
       });
     });
 
-    // Close button
-    closeLightbox?.addEventListener('click', closeLightboxFn);
+    // Close button - query fresh
+    const closeLightboxBtn = document.getElementById('close-lightbox');
+    closeLightboxBtn?.addEventListener('click', closeLightboxFn);
 
-    // Click outside to close
-    lightbox.addEventListener('click', (e) => {
+    // Click outside to close - query fresh
+    const lightbox = document.getElementById('image-lightbox');
+    lightbox?.addEventListener('click', (e) => {
       if (e.target === lightbox) {
         closeLightboxFn();
       }
     });
 
     // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (!lightbox.classList.contains('show')) return;
+    const keyboardHandler = (e: KeyboardEvent) => {
+      const lightbox = document.getElementById('image-lightbox');
+      if (!lightbox || !lightbox.classList.contains('show')) return;
 
       if (e.key === 'Escape') {
         closeLightboxFn();
       } else if (e.key === 'ArrowLeft') {
-        showImage(currentIndex - 1);
+        showMedia(currentIndex - 1);
       } else if (e.key === 'ArrowRight') {
-        showImage(currentIndex + 1);
+        showMedia(currentIndex + 1);
       }
-    });
+    };
+
+    document.addEventListener('keydown', keyboardHandler);
   }
+
+  // Initialize on DOMContentLoaded for first page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeCarousel();
+      initializeLightbox();
+    });
+  } else {
+    initializeCarousel();
+    initializeLightbox();
+  }
+
+  // Reinitialize after Astro page transitions
+  document.addEventListener('astro:after-swap', () => {
+    // Reset initialization flag for new page
+    lightboxInitialized = false;
+    initializeCarousel();
+    initializeLightbox();
+  });
 </script>
