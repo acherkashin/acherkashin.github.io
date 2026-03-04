@@ -1,0 +1,33 @@
+---
+import { AppConfig } from '@/utils/AppConfig';
+import Base from '@/layouts/Base.astro';
+import Section from '@/components/Section.astro';
+import TelegramPostCard from '@/components/TelegramPostCard.astro';
+import Heading from '@/components/Heading.astro';
+import { sortPostsByDate } from '@/utils/data.util';
+
+const { title } = AppConfig;
+const { description } = AppConfig;
+
+const allPosts = await Astro.glob('./*.md');
+allPosts.sort((a, b) => {
+  const dateA = new Date(a.frontmatter.publishDate);
+  const dateB = new Date(b.frontmatter.publishDate);
+  return dateB.getTime() - dateA.getTime();
+});
+---
+
+<Base head={{ title: `Посты из Telegram - ${title}`, description }}>
+  <Section>
+    <Heading title="Посты из Telegram" />
+  </Section>
+  <Section>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {allPosts.map((post: any) => (
+        <div class="h-full">
+          <TelegramPostCard post={post} />
+        </div>
+      ))}
+    </div>
+  </Section>
+</Base>

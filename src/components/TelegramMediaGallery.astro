@@ -1,0 +1,146 @@
+---
+interface Props {
+  media: string[];
+  alt?: string;
+  mode?: 'grid' | 'carousel';
+}
+
+const { media, alt = 'Telegram post media', mode = 'grid' } = Astro.props;
+
+if (!media || media.length === 0) {
+  return null;
+}
+
+const getGridClass = (count: number) => {
+  if (count === 1) return 'grid-cols-1';
+  if (count === 2) return 'grid-cols-2';
+  if (count === 3) return 'grid-cols-3';
+  return 'grid-cols-2 md:grid-cols-3';
+};
+
+const isVideo = (src: string) => {
+  return src.match(/\.(mp4|webm|ogg)$/i);
+};
+---
+
+{mode === 'grid' ? (
+  <!-- Grid Layout (Default) -->
+  <div class={`grid gap-2 ${getGridClass(media.length)}`}>
+    {media.map((src, index) => (
+      <div class="relative overflow-hidden rounded-lg">
+        {isVideo(src) ? (
+          <video
+            src={src}
+            controls
+            class="h-full w-full object-cover"
+            preload="metadata"
+          >
+            <track kind="captions" />
+          </video>
+        ) : (
+          <img
+            src={src}
+            alt={`${alt} ${index + 1}`}
+            class="h-full w-full object-cover transition-transform hover:scale-105"
+            loading="lazy"
+          />
+        )}
+      </div>
+    ))}
+  </div>
+) : (
+  <!-- Carousel Layout (Alternative) -->
+  <div class="relative">
+    <div class="carousel-container overflow-x-auto snap-x snap-mandatory">
+      <div class="flex gap-2">
+        {media.map((src, index) => (
+          <div class="carousel-item min-w-full snap-center">
+            <div class="relative overflow-hidden rounded-lg">
+              {isVideo(src) ? (
+                <video
+                  src={src}
+                  controls
+                  class="h-full w-full object-cover"
+                  preload="metadata"
+                >
+                  <track kind="captions" />
+                </video>
+              ) : (
+                <img
+                  src={src}
+                  alt={`${alt} ${index + 1}`}
+                  class="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+    
+    {media.length > 1 && (
+      <div class="mt-2 flex justify-center gap-1.5">
+        {media.map((_, index) => (
+          <button
+            class="carousel-dot h-2 w-2 rounded-full bg-stone-400 transition-all hover:bg-stone-600 dark:bg-stone-600 dark:hover:bg-stone-400"
+            data-index={index}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+)}
+
+<style>
+  .carousel-container {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .carousel-container::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .carousel-dot.active {
+    @apply bg-stone-800 dark:bg-stone-200 scale-125;
+  }
+</style>
+
+<script>
+  // Simple carousel functionality (only if carousel mode is used)
+  const container = document.querySelector('.carousel-container');
+  const dots = document.querySelectorAll('.carousel-dot');
+  
+  if (container && dots.length > 0) {
+    const updateActiveDot = () => {
+      const scrollLeft = container.scrollLeft;
+      const itemWidth = container.scrollWidth / dots.length;
+      const activeIndex = Math.round(scrollLeft / itemWidth);
+      
+      dots.forEach((dot, index) => {
+        if (index === activeIndex) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    };
+    
+    container.addEventListener('scroll', updateActiveDot);
+    
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        const itemWidth = container.scrollWidth / dots.length;
+        container.scrollTo({
+          left: itemWidth * index,
+          behavior: 'smooth'
+        });
+      });
+    });
+    
+    // Initialize
+    updateActiveDot();
+  }
+</script>

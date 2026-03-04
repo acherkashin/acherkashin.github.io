@@ -221,6 +221,7 @@ function buildFrontmatter(group, payloadMeta, mediaLinks) {
     canonicalId,
     body,
     data: {
+      layout: "../../layouts/telegram-post.astro",
       title,
       publishDate: pickPublishDate(group),
       updatedDate: pickUpdatedDate(group),

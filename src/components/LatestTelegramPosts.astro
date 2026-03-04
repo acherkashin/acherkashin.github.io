@@ -1,0 +1,33 @@
+---
+import Section from './Section.astro';
+import Heading from './Heading.astro';
+import TelegramPostCard from './TelegramPostCard.astro';
+
+interface Props {
+  posts: any[];
+}
+
+const { posts } = Astro.props;
+---
+
+<Section>
+  <div class="flex items-center justify-between">
+    <Heading title="Посты из Telegram" />
+    <a
+      href="/posts"
+      class="text-sm text-orange-700 hover:underline dark:text-orange-500"
+    >
+      Все посты →
+    </a>
+  </div>
+</Section>
+
+<Section>
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    {posts.map((post: any) => (
+      <div class="h-full">
+        <TelegramPostCard post={post} />
+      </div>
+    ))}
+  </div>
+</Section>

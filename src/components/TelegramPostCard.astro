@@ -1,0 +1,83 @@
+---
+import { formatDate } from '@/utils/data.util';
+import TelegramReactions from './TelegramReactions.astro';
+
+interface Props {
+  post: any;
+}
+
+const { post } = Astro.props;
+
+// Extract first few lines of text for preview
+const getExcerpt = (text: string, maxLength: number = 150) => {
+  if (!text) return '';
+  const cleaned = text.replace(/^#\s+.*$/gm, '').trim(); // Remove markdown headers
+  if (cleaned.length <= maxLength) return cleaned;
+  return cleaned.slice(0, maxLength) + '...';
+};
+
+const excerpt = getExcerpt(post.frontmatter.title || post.compiledContent?.());
+const firstMedia = post.frontmatter.media?.[0];
+const mediaCount = post.frontmatter.media?.length || 0;
+const reactions = post.frontmatter.reactions || [];
+const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count > 0);
+---
+
+<a href={post.url} class="group block h-full">
+  <div
+    class="flex h-full flex-col overflow-hidden rounded-2xl bg-stone-200/50 from-orange-900 via-amber-700 to-white p-[1px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)] transition-all hover:bg-gradient-to-r dark:bg-gray-900"
+  >
+    <div
+      class="flex h-full flex-col rounded-[1rem] bg-stone-300 text-gray-900 opacity-90 dark:bg-stone-800 dark:text-white"
+    >
+      <!-- Media Preview -->
+      {firstMedia && (
+        <div class="relative overflow-hidden rounded-t-[1rem]">
+          <img
+            src={firstMedia}
+            alt="Post preview"
+            class="h-48 w-full object-cover transition-transform group-hover:scale-105"
+            loading="lazy"
+          />
+          {mediaCount > 1 && (
+            <div class="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
+              +{mediaCount - 1}
+            </div>
+          )}
+        </div>
+      )}
+
+      <!-- Content -->
+      <div class="flex flex-1 flex-col p-4">
+        <div class="flex-1">
+          <div class="mb-3 flex justify-between text-xs text-stone-600 dark:text-stone-400">
+            <p>{formatDate(post.frontmatter.publishDate)}</p>
+            {post.frontmatter.views && (
+              <p class="flex items-center gap-1">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                {post.frontmatter.views.toLocaleString('ru-RU')}
+              </p>
+            )}
+          </div>
+
+          <p class="line-clamp-4 text-sm leading-relaxed">{excerpt}</p>
+        </div>
+
+        <!-- Reactions Footer -->
+        {hasReactions && (
+          <div class="mt-4 flex justify-end">
+            <TelegramReactions 
+              reactions={reactions}
+              className="text-xs"
+            />
+          </div>
+        )}
+
+        <p class="mt-4 text-sm underline">Читать далее →</p>
+      </div>
+    </div>
+  </div>
+</a>
