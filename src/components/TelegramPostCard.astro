@@ -8,17 +8,37 @@ interface Props {
 
 const { post } = Astro.props;
 
-// Extract first few lines of text for preview
-const getExcerpt = (text: string, maxLength: number = 150) => {
+// Get full post text body
+const getPostText = () => {
+  // Try rawContent first (gets markdown before compilation)
+  if (typeof post.rawContent === 'function') {
+    const raw = post.rawContent();
+    // Remove frontmatter
+    return raw.replace(/^---[\s\S]*?---\n\n/, '').trim();
+  }
+  // Fallback to title
+  return post.frontmatter.title || '';
+};
+
+// Create text preview
+const getTextPreview = (text: string, maxLength: number = 250) => {
   if (!text) return '';
-  const cleaned = text.replace(/^#\s+.*$/gm, '').trim(); // Remove markdown headers
+  // Remove markdown headers and clean up
+  const cleaned = text
+    .replace(/^#{1,6}\s+/gm, '') // Remove markdown headers
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to plain text
+    .trim();
+  
   if (cleaned.length <= maxLength) return cleaned;
   return cleaned.slice(0, maxLength) + '...';
 };
 
-const excerpt = getExcerpt(post.frontmatter.title || post.compiledContent?.());
+const fullText = getPostText();
+const textPreview = getTextPreview(fullText);
+
 const firstMedia = post.frontmatter.media?.[0];
 const mediaCount = post.frontmatter.media?.length || 0;
+const hasMedia = mediaCount > 0;
 const reactions = post.frontmatter.reactions || [];
 const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count > 0);
 ---
@@ -30,8 +50,8 @@ const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count 
     <div
       class="flex h-full flex-col rounded-[1rem] bg-stone-300 text-gray-900 opacity-90 dark:bg-stone-800 dark:text-white"
     >
-      <!-- Media Preview -->
-      {firstMedia && (
+      <!-- Media Preview (only if media exists) -->
+      {hasMedia && firstMedia && (
         <div class="relative overflow-hidden rounded-t-[1rem]">
           <img
             src={firstMedia}
@@ -63,7 +83,7 @@ const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count 
             )}
           </div>
 
-          <p class="line-clamp-4 text-sm leading-relaxed">{excerpt}</p>
+          <p class="line-clamp-6 whitespace-pre-wrap text-sm leading-relaxed">{textPreview}</p>
         </div>
 
         <!-- Reactions Footer -->

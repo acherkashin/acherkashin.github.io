@@ -4,6 +4,7 @@ import Section from '@/components/Section.astro';
 import PostContent from '@/components/PostContent.astro';
 import TelegramMediaGallery from '@/components/TelegramMediaGallery.astro';
 import TelegramReactions from '@/components/TelegramReactions.astro';
+import TelegramImageLightbox from '@/components/TelegramImageLightbox.astro';
 import { formatDate } from '@/utils/data.util';
 
 const { frontmatter } = Astro.props;
@@ -13,6 +14,7 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
 ---
 
 <Base head={{ title: frontmatter.title, description: frontmatter.title }}>
+  <TelegramImageLightbox />
   <div id="content" class="mx-auto w-full max-w-screen-md">
     <Section>
       <div class="flex flex-col">
@@ -54,7 +56,7 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
 
         <!-- Post Content -->
         <PostContent>
-          <div class="whitespace-pre-wrap">
+          <div class="telegram-content whitespace-pre-wrap">
             <slot />
           </div>
         </PostContent>
@@ -75,3 +77,130 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
     </Section>
   </div>
 </Base>
+
+<style is:global>
+  /* Telegram post specific formatting */
+  .telegram-content p {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .telegram-content p:first-child {
+    margin-top: 0;
+  }
+
+  .telegram-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Ordered list formatting */
+  .telegram-content ol {
+    padding-left: 1.5rem;
+    list-style-position: outside;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .telegram-content ol li {
+    padding-left: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .telegram-content ol li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Unordered list formatting */
+  .telegram-content ul {
+    padding-left: 1.5rem;
+    list-style-position: outside;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .telegram-content ul li {
+    padding-left: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .telegram-content ul li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Nested lists */
+  .telegram-content ol ol,
+  .telegram-content ol ul,
+  .telegram-content ul ol,
+  .telegram-content ul ul {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+</style>
+
+<style is:global>
+  /* Custom styles for Telegram post content only */
+  .telegram-content p {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .telegram-content p:first-child {
+    margin-top: 0;
+  }
+
+  .telegram-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Ordered list improvements */
+  .telegram-content ol {
+    padding-left: 1.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    list-style-position: outside;
+  }
+
+  .telegram-content ol li {
+    padding-left: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .telegram-content ol li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Unordered list improvements */
+  .telegram-content ul {
+    padding-left: 1.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .telegram-content ul li {
+    padding-left: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .telegram-content ul li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Reduce excessive whitespace from pre-wrap */
+  .telegram-content {
+    line-height: 1.6;
+  }
+
+  /* Headings in Telegram posts */
+  .telegram-content h1,
+  .telegram-content h2,
+  .telegram-content h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .telegram-content h1:first-child,
+  .telegram-content h2:first-child,
+  .telegram-content h3:first-child {
+    margin-top: 0;
+  }
+</style>
