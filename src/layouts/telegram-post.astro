@@ -56,7 +56,7 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
 
         <!-- Post Content -->
         <PostContent>
-          <div class="telegram-content whitespace-pre-wrap">
+          <div class="telegram-content">
             <slot />
           </div>
         </PostContent>
@@ -77,71 +77,3 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
     </Section>
   </div>
 </Base>
-
-<style is:global>
-  /* Telegram post content formatting (scoped under prose to override typography defaults) */
-  .prose .telegram-content {
-    line-height: 1.6;
-  }
-
-  .prose .telegram-content p {
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .prose .telegram-content p:first-child {
-    margin-top: 0;
-  }
-
-  .prose .telegram-content p:last-child {
-    margin-bottom: 0;
-  }
-
-  .prose .telegram-content ol,
-  .prose .telegram-content ul {
-    padding-left: 1.5rem;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-    list-style-position: outside;
-  }
-
-  .prose .telegram-content ol > li,
-  .prose .telegram-content ul > li {
-    padding-left: 0.5rem;
-    margin-bottom: 0.5rem;
-    /* Keep pre-wrap for paragraph text, but reset list items to avoid marker/text line split. */
-    white-space: normal;
-  }
-
-  .prose .telegram-content ol > li:last-child,
-  .prose .telegram-content ul > li:last-child {
-    margin-bottom: 0;
-  }
-
-  .prose .telegram-content ol > li > p,
-  .prose .telegram-content ul > li > p {
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-
-  .prose .telegram-content ol ol,
-  .prose .telegram-content ol ul,
-  .prose .telegram-content ul ol,
-  .prose .telegram-content ul ul {
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .prose .telegram-content h1,
-  .prose .telegram-content h2,
-  .prose .telegram-content h3 {
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .prose .telegram-content h1:first-child,
-  .prose .telegram-content h2:first-child,
-  .prose .telegram-content h3:first-child {
-    margin-top: 0;
-  }
-</style>
