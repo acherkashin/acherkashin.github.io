@@ -169,6 +169,43 @@ function parseReactions(reactionsObj) {
   });
 }
 
+function serializeMessageEntities(entities) {
+  if (!Array.isArray(entities) || entities.length === 0) return [];
+
+  return entities
+    .map((entity) => {
+      const className =
+        typeof entity?.className === "string" && entity.className.length > 0
+          ? entity.className
+          : typeof entity?.constructor?.name === "string"
+            ? entity.constructor.name
+            : null;
+      const offset = Number(entity?.offset);
+      const length = Number(entity?.length);
+
+      if (!className) return null;
+      if (!Number.isInteger(offset) || offset < 0) return null;
+      if (!Number.isInteger(length) || length <= 0) return null;
+
+      const payload = { className, offset, length };
+      if (typeof entity?.language === "string" && entity.language.length > 0) {
+        payload.language = entity.language;
+      }
+      if (typeof entity?.url === "string" && entity.url.length > 0) {
+        payload.url = entity.url;
+      }
+      if (entity?.userId !== undefined && entity?.userId !== null) {
+        payload.userId = String(entity.userId);
+      }
+      if (entity?.documentId !== undefined && entity?.documentId !== null) {
+        payload.documentId = String(entity.documentId);
+      }
+
+      return payload;
+    })
+    .filter(Boolean);
+}
+
 async function withFloodWaitRetry(fn, retries = 3) {
   let attempt = 0;
   while (attempt <= retries) {
@@ -329,6 +366,7 @@ async function main() {
 
     const mediaFiles = await downloadMessageMedia(client, message, stagingMediaDir);
     const text = message.message ?? "";
+    const entities = serializeMessageEntities(message.entities ?? []);
     const reactions = parseReactions(message.reactions);
 
     const editDate = normalizeTelegramDate(message.editDate);
@@ -337,6 +375,7 @@ async function main() {
       date: messageDate.toISOString(),
       editDate: editDate ? editDate.toISOString() : null,
       text,
+      entities,
       views: message.views ?? null,
       forwards: message.forwards ?? null,
       reactions,

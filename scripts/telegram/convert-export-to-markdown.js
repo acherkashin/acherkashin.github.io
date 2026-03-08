@@ -6,6 +6,19 @@ const MARKDOWN_DIRNAME = "markdown";
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".webm", ".m4v"]);
 const MEDIA_LIMIT = 10;
+const MARKDOWN_ESCAPE_RE = /[\\`*_[\]()~|]/g;
+const ENTITY_PRIORITY = new Map([
+  ["MessageEntityPre", 0],
+  ["MessageEntityCode", 1],
+  ["MessageEntityTextUrl", 2],
+  ["MessageEntityUrl", 3],
+  ["MessageEntityBlockquote", 4],
+  ["MessageEntityBold", 5],
+  ["MessageEntityItalic", 6],
+  ["MessageEntityUnderline", 7],
+  ["MessageEntityStrike", 8],
+  ["MessageEntitySpoiler", 9],
+]);
 
 function parseArgs(argv) {
   const args = {
@@ -98,6 +111,176 @@ function toYaml(value, indent = 0) {
   }
 
   return `${space}${yamlScalar(value)}`;
+}
+
+function escapeMarkdownText(value) {
+  return String(value).replace(MARKDOWN_ESCAPE_RE, "\\$&");
+}
+
+function getEntityPriority(className) {
+  return ENTITY_PRIORITY.get(className) ?? 100;
+}
+
+function normalizeLanguage(value) {
+  if (typeof value !== "string") return "";
+  return value.trim().replace(/[^\w#+.-]/g, "");
+}
+
+function wrapInlineCode(rawText) {
+  const value = String(rawText);
+  const runs = value.match(/`+/g) ?? [];
+  const maxBackticks = runs.reduce((max, run) => Math.max(max, run.length), 0);
+  const fence = "`".repeat(maxBackticks + 1);
+  const needsPadding = value.startsWith("`") || value.endsWith("`");
+  const padded = needsPadding ? ` ${value} ` : value;
+  return `${fence}${padded}${fence}`;
+}
+
+function wrapFencedCode(rawText, language) {
+  const value = String(rawText).replace(/\r\n/g, "\n");
+  const runs = value.match(/`+/g) ?? [];
+  const maxBackticks = runs.reduce((max, run) => Math.max(max, run.length), 0);
+  const fenceSize = Math.max(3, maxBackticks + 1);
+  const fence = "`".repeat(fenceSize);
+  const lang = normalizeLanguage(language);
+  const header = lang ? `${fence}${lang}` : fence;
+  const endOfCode = value.endsWith("\n") ? "" : "\n";
+  return `${header}\n${value}${endOfCode}${fence}`;
+}
+
+function wrapBlockquote(text) {
+  return String(text)
+    .split("\n")
+    .map((line) => (line.length > 0 ? `> ${line}` : ">"))
+    .join("\n");
+}
+
+function escapeMarkdownLinkDestination(value) {
+  return String(value).trim().replace(/\\/g, "\\\\").replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/\s/g, "%20");
+}
+
+function normalizeEntities(rawEntities, textLength) {
+  if (!Array.isArray(rawEntities) || textLength <= 0) return [];
+
+  const entities = [];
+  for (const raw of rawEntities) {
+    if (!isObject(raw)) continue;
+
+    const className = typeof raw.className === "string" ? raw.className.trim() : "";
+    const offset = Number(raw.offset);
+    const length = Number(raw.length);
+    if (!className) continue;
+    if (!Number.isInteger(offset) || offset < 0 || offset >= textLength) continue;
+    if (!Number.isInteger(length) || length <= 0) continue;
+
+    const end = Math.min(offset + length, textLength);
+    if (end <= offset) continue;
+
+    const entity = {
+      className,
+      offset,
+      length: end - offset,
+    };
+    if (typeof raw.language === "string" && raw.language.trim().length > 0) {
+      entity.language = raw.language;
+    }
+    if (typeof raw.url === "string" && raw.url.length > 0) {
+      entity.url = raw.url;
+    }
+    if (raw.userId !== undefined && raw.userId !== null) {
+      entity.userId = String(raw.userId);
+    }
+    if (raw.documentId !== undefined && raw.documentId !== null) {
+      entity.documentId = String(raw.documentId);
+    }
+
+    entities.push(entity);
+  }
+
+  entities.sort((a, b) => {
+    if (a.offset !== b.offset) return a.offset - b.offset;
+    if (a.length !== b.length) return b.length - a.length;
+    const p = getEntityPriority(a.className) - getEntityPriority(b.className);
+    if (p !== 0) return p;
+    return a.className.localeCompare(b.className);
+  });
+
+  return entities;
+}
+
+function renderEntity(entity, innerRenderedText, rawText) {
+  switch (entity.className) {
+    case "MessageEntityPre":
+      return wrapFencedCode(rawText, entity.language ?? "");
+    case "MessageEntityCode":
+      return wrapInlineCode(rawText);
+    case "MessageEntityBold":
+      return `**${innerRenderedText}**`;
+    case "MessageEntityItalic":
+      return `*${innerRenderedText}*`;
+    case "MessageEntityStrike":
+      return `~~${innerRenderedText}~~`;
+    case "MessageEntityUnderline":
+      return `<u>${innerRenderedText}</u>`;
+    case "MessageEntityTextUrl": {
+      const href = escapeMarkdownLinkDestination(entity.url ?? rawText);
+      return `[${innerRenderedText}](${href})`;
+    }
+    case "MessageEntityUrl": {
+      const target = String(rawText).trim();
+      if (!target) return "";
+      return `<${target}>`;
+    }
+    case "MessageEntityBlockquote":
+      return wrapBlockquote(innerRenderedText);
+    case "MessageEntitySpoiler":
+      return `||${innerRenderedText}||`;
+    default:
+      return innerRenderedText;
+  }
+}
+
+function renderTelegramRange(text, entities, offset, length, startIndex) {
+  if (length <= 0) return "";
+
+  const end = offset + length;
+  let cursor = offset;
+  let output = "";
+
+  for (let i = startIndex; i < entities.length; i += 1) {
+    const entity = entities[i];
+    if (entity.offset >= end) break;
+    if (entity.offset < offset) continue;
+    if (entity.offset < cursor) continue;
+
+    if (entity.offset > cursor) {
+      output += escapeMarkdownText(text.slice(cursor, entity.offset));
+    }
+
+    const entityEnd = Math.min(entity.offset + entity.length, end);
+    if (entityEnd <= entity.offset) {
+      continue;
+    }
+
+    const entityLength = entityEnd - entity.offset;
+    const rawEntityText = text.slice(entity.offset, entityEnd);
+    const renderedEntityText = renderTelegramRange(text, entities, entity.offset, entityLength, i + 1);
+    output += renderEntity(entity, renderedEntityText, rawEntityText);
+    cursor = entityEnd;
+  }
+
+  if (cursor < end) {
+    output += escapeMarkdownText(text.slice(cursor, end));
+  }
+
+  return output;
+}
+
+function renderTelegramTextToMarkdown(text, rawEntities) {
+  const source = typeof text === "string" ? text : "";
+  const entities = normalizeEntities(rawEntities, source.length);
+  if (entities.length === 0) return source;
+  return renderTelegramRange(source, entities, 0, source.length, 0);
 }
 
 function buildGroupedPosts(posts) {
@@ -204,7 +387,10 @@ function pickPublishDate(group) {
 
 function collectBody(group) {
   const chunks = group
-    .map((post) => (typeof post.text === "string" ? post.text.trim() : ""))
+    .map((post) => {
+      const text = typeof post.text === "string" ? post.text : "";
+      return renderTelegramTextToMarkdown(text, post.entities).trim();
+    })
     .filter((text) => text.length > 0);
   return dedupeAdjacent(chunks).join("\n\n");
 }
