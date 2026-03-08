@@ -79,128 +79,69 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
 </Base>
 
 <style is:global>
-  /* Telegram post specific formatting */
-  .telegram-content p {
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .telegram-content p:first-child {
-    margin-top: 0;
-  }
-
-  .telegram-content p:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Ordered list formatting */
-  .telegram-content ol {
-    padding-left: 1.5rem;
-    list-style-position: outside;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .telegram-content ol li {
-    padding-left: 0.375rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .telegram-content ol li:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Unordered list formatting */
-  .telegram-content ul {
-    padding-left: 1.5rem;
-    list-style-position: outside;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .telegram-content ul li {
-    padding-left: 0.375rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .telegram-content ul li:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Nested lists */
-  .telegram-content ol ol,
-  .telegram-content ol ul,
-  .telegram-content ul ol,
-  .telegram-content ul ul {
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-</style>
-
-<style is:global>
-  /* Custom styles for Telegram post content only */
-  .telegram-content p {
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .telegram-content p:first-child {
-    margin-top: 0;
-  }
-
-  .telegram-content p:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Ordered list improvements */
-  .telegram-content ol {
-    padding-left: 1.5rem;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-    list-style-position: outside;
-  }
-
-  .telegram-content ol li {
-    padding-left: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .telegram-content ol li:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Unordered list improvements */
-  .telegram-content ul {
-    padding-left: 1.5rem;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .telegram-content ul li {
-    padding-left: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .telegram-content ul li:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Reduce excessive whitespace from pre-wrap */
-  .telegram-content {
+  /* Telegram post content formatting (scoped under prose to override typography defaults) */
+  .prose .telegram-content {
     line-height: 1.6;
   }
 
-  /* Headings in Telegram posts */
-  .telegram-content h1,
-  .telegram-content h2,
-  .telegram-content h3 {
+  .prose .telegram-content p {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prose .telegram-content p:first-child {
+    margin-top: 0;
+  }
+
+  .prose .telegram-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .prose .telegram-content ol,
+  .prose .telegram-content ul {
+    padding-left: 1.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    list-style-position: outside;
+  }
+
+  .prose .telegram-content ol > li,
+  .prose .telegram-content ul > li {
+    padding-left: 0.5rem;
+    margin-bottom: 0.5rem;
+    /* Keep pre-wrap for paragraph text, but reset list items to avoid marker/text line split. */
+    white-space: normal;
+  }
+
+  .prose .telegram-content ol > li:last-child,
+  .prose .telegram-content ul > li:last-child {
+    margin-bottom: 0;
+  }
+
+  .prose .telegram-content ol > li > p,
+  .prose .telegram-content ul > li > p {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .prose .telegram-content ol ol,
+  .prose .telegram-content ol ul,
+  .prose .telegram-content ul ol,
+  .prose .telegram-content ul ul {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .prose .telegram-content h1,
+  .prose .telegram-content h2,
+  .prose .telegram-content h3 {
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
   }
 
-  .telegram-content h1:first-child,
-  .telegram-content h2:first-child,
-  .telegram-content h3:first-child {
+  .prose .telegram-content h1:first-child,
+  .prose .telegram-content h2:first-child,
+  .prose .telegram-content h3:first-child {
     margin-top: 0;
   }
 </style>
