@@ -395,6 +395,13 @@ function collectBody(group) {
   return dedupeAdjacent(chunks).join("\n\n");
 }
 
+function collectRawBody(group) {
+  const chunks = group
+    .map((post) => (typeof post.text === "string" ? post.text.trim() : ""))
+    .filter((text) => text.length > 0);
+  return dedupeAdjacent(chunks).join("\n\n");
+}
+
 function buildFrontmatter(group, payloadMeta, mediaLinks) {
   const ids = group
     .map((post) => Number(post.id))
@@ -402,7 +409,8 @@ function buildFrontmatter(group, payloadMeta, mediaLinks) {
     .sort((a, b) => a - b);
   const canonicalId = ids[0];
   const body = collectBody(group);
-  const title = firstLine(body) || `Post ${canonicalId}`;
+  const rawBody = collectRawBody(group);
+  const title = firstLine(rawBody) || `Post ${canonicalId}`;
   return {
     canonicalId,
     body,
