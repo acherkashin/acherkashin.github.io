@@ -77,3 +77,9 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
     </Section>
   </div>
 </Base>
+
+<style is:global>
+.telegram-content p:not(:has(*)) {
+  white-space: pre-wrap;
+}
+</style>
