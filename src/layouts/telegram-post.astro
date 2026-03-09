@@ -5,12 +5,34 @@ import PostContent from '@/components/PostContent.astro';
 import TelegramMediaGallery from '@/components/TelegramMediaGallery.astro';
 import TelegramReactions from '@/components/TelegramReactions.astro';
 import TelegramImageLightbox from '@/components/TelegramImageLightbox.astro';
+import Tags from '@/components/Tags.astro';
 import { formatDate } from '@/utils/data.util';
+import { extractTelegramTagsFromMarkdown } from '@/utils/telegram-tags.util';
 
-const { frontmatter } = Astro.props;
+const { frontmatter, rawContent, compiledContent } = Astro.props;
 
 const formattedDate = formatDate(frontmatter.publishDate);
 const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updatedDate) : null;
+const rawPostContent = typeof rawContent === 'function' ? rawContent() : '';
+const postTags = extractTelegramTagsFromMarkdown(rawPostContent);
+const compiledPostContent = typeof compiledContent === 'function' ? await compiledContent() : '';
+
+const HASHTAG_ONLY_PARAGRAPH_RE = /^(?:#[\p{L}\p{N}_]+(?:\s+|$))+$/u;
+
+const removeHashtagOnlyParagraphs = (html: string): string => {
+  if (!html) return html;
+
+  return html.replace(/<p>([\s\S]*?)<\/p>/g, (paragraphHtml, innerHtml) => {
+    const plainText = String(innerHtml)
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+
+    return HASHTAG_ONLY_PARAGRAPH_RE.test(plainText) ? '' : paragraphHtml;
+  });
+};
+
+const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
 ---
 
 <Base head={{ title: frontmatter.title, description: frontmatter.title }}>
@@ -40,6 +62,11 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
               </a>
             </p>
           )}
+          {postTags.length > 0 && (
+            <div class="mt-3">
+              <Tags tags={postTags} withHref={true} />
+            </div>
+          )}
         </div>
 
         <!-- Media Gallery -->
@@ -57,7 +84,7 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
         <!-- Post Content -->
         <PostContent>
           <div class="telegram-content">
-            <slot />
+            {cleanedPostContent ? <Fragment set:html={cleanedPostContent} /> : <slot />}
           </div>
         </PostContent>
 
