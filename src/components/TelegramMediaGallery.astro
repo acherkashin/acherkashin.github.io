@@ -57,6 +57,7 @@ const buildRows = () => {
 };
 
 const rows = buildRows();
+const isSingleMedia = media.length === 1;
 
 // Serialize media array for JavaScript
 const mediaJson = JSON.stringify(media);
@@ -70,12 +71,12 @@ const mediaJson = JSON.stringify(media);
         {row.map((src, colIndex) => {
           const mediaIndex = gridLayout.slice(0, rowIndex).reduce((a, b) => a + b, 0) + colIndex;
           return (
-            <div class="relative overflow-hidden rounded-lg aspect-square bg-stone-200 dark:bg-stone-800">
+            <div class={`relative overflow-hidden rounded-lg bg-stone-200 dark:bg-stone-800 ${isSingleMedia ? 'flex min-h-[14rem] items-center justify-center' : 'aspect-square'}`}>
               {isVideo(src) ? (
                 <video
                   src={src}
                   controls
-                  class="h-full w-full object-cover"
+                  class={`h-full w-full ${isSingleMedia ? 'object-contain' : 'object-cover'}`}
                   preload="metadata"
                 >
                   <track kind="captions" />
@@ -91,7 +92,7 @@ const mediaJson = JSON.stringify(media);
                   <img
                     src={src}
                     alt={`${alt} ${mediaIndex + 1}`}
-                    class="h-full w-full object-cover transition-transform hover:scale-105"
+                    class={`h-full w-full ${isSingleMedia ? 'object-contain' : 'object-cover transition-transform hover:scale-105'}`}
                     loading="lazy"
                   />
                 </button>
