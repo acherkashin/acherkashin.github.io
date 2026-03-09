@@ -1,0 +1,158 @@
+---
+import { formatDate } from '@/utils/data.util';
+import { extractTelegramTagsFromMarkdown } from '@/utils/telegram-tags.util';
+import { toString } from 'mdast-util-to-string';
+import remarkParse from 'remark-parse';
+import TelegramReactions from './TelegramReactions.astro';
+import Tags from './Tags.astro';
+import { unified } from 'unified';
+
+interface Props {
+  post: any;
+}
+
+const { post } = Astro.props;
+const markdownParser = unified().use(remarkParse);
+const rawPostContent = typeof post.rawContent === 'function' ? post.rawContent() : '';
+
+// Get full post text body
+const getPostText = () => {
+  // Try rawContent first (gets markdown before compilation)
+  if (rawPostContent) {
+    // Remove frontmatter
+    return rawPostContent.replace(/^---[\s\S]*?---\n\n/, '').trim();
+  }
+  // Fallback to title
+  return post.frontmatter.title || '';
+};
+
+const markdownToPlainText = (markdown: string) => {
+  if (!markdown) return '';
+
+  try {
+    const tree = markdownParser.parse(markdown);
+    type MdastNode = Parameters<typeof toString>[0];
+    const children = Array.isArray((tree as { children?: unknown }).children)
+      ? ((tree as { children: MdastNode[] }).children)
+      : [tree as MdastNode];
+
+    return children
+      .map((node) => toString(node))
+      .filter((chunk) => chunk.trim().length > 0)
+      .join('\n\n');
+  } catch {
+    // Fallback to raw text if parser fails for malformed markdown
+    return markdown;
+  }
+};
+
+// Create text preview
+const getTextPreview = (text: string, maxLength: number = 250) => {
+  if (!text) return '';
+
+  const cleaned = markdownToPlainText(text)
+    .replace(/\r/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  
+  if (cleaned.length <= maxLength) return cleaned;
+  return cleaned.slice(0, maxLength) + '...';
+};
+
+const fullText = getPostText();
+const textPreview = getTextPreview(fullText);
+const postTags = extractTelegramTagsFromMarkdown(rawPostContent);
+
+const mediaList: string[] = Array.isArray(post.frontmatter.media) ? post.frontmatter.media : [];
+const mediaCount = mediaList.length;
+const isVideoMedia = (src: string) => /\.(mp4|mov|webm|m4v|ogg)(?:[?#].*)?$/i.test(src);
+const previewImage = mediaList.find((src) => !isVideoMedia(src));
+const hasPreviewImage = Boolean(previewImage);
+const hasViews = Boolean(post.frontmatter.views);
+const viewsCount = Number(post.frontmatter.views);
+const commentsCount = Number(post.frontmatter.comments);
+const hasComments =
+  post.frontmatter.comments !== null &&
+  post.frontmatter.comments !== undefined &&
+  Number.isFinite(commentsCount);
+const reactions = post.frontmatter.reactions || [];
+const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count > 0);
+---
+
+<a href={post.url} class="group block h-full">
+  <div
+    class="flex h-full flex-col overflow-hidden rounded-2xl bg-stone-200/50 from-orange-900 via-amber-700 to-white p-[1px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)] transition-all hover:bg-gradient-to-r dark:bg-gray-900"
+  >
+    <div
+      class="flex h-full flex-col rounded-[1rem] bg-stone-300 text-gray-900 opacity-90 dark:bg-stone-800 dark:text-white"
+    >
+      <!-- Media Preview (only if an image preview is available) -->
+      {hasPreviewImage && previewImage && (
+        <div class="relative overflow-hidden rounded-t-[1rem]">
+          <img
+            src={previewImage}
+            alt="Post preview"
+            class="h-48 w-full object-cover transition-transform group-hover:scale-105"
+            loading="lazy"
+          />
+          {mediaCount > 1 && (
+            <div class="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
+              +{mediaCount - 1}
+            </div>
+          )}
+        </div>
+      )}
+
+      <!-- Content -->
+      <div class="flex flex-1 flex-col p-4">
+        <div class="flex-1">
+          <div class="mb-3 flex justify-between text-xs text-stone-600 dark:text-stone-400">
+            <p>{formatDate(post.frontmatter.publishDate)}</p>
+            {(hasViews || hasComments) && (
+              <div class="flex items-center gap-2">
+                {hasViews && (
+                  <p class="flex items-center gap-1">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    {viewsCount.toLocaleString('ru-RU')}
+                  </p>
+                )}
+                {hasComments && (
+                  <p class="flex items-center gap-1">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5m-9 7 3.674-3.674A1 1 0 018.38 17H19a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 001 1.732V21z" />
+                    </svg>
+                    {commentsCount.toLocaleString('ru-RU')}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {postTags.length > 0 && (
+            <div class="pb-4">
+              <Tags tags={postTags} />
+            </div>
+          )}
+
+          <p class="line-clamp-6 whitespace-pre-wrap text-sm leading-relaxed">{textPreview}</p>
+        </div>
+
+        <!-- Reactions Footer -->
+        {hasReactions && (
+          <div class="mt-4 flex justify-end">
+            <TelegramReactions 
+              reactions={reactions}
+              className="text-xs"
+            />
+          </div>
+        )}
+
+        <p class="mt-4 text-sm underline">Читать далее →</p>
+      </div>
+    </div>
+  </div>
+</a>

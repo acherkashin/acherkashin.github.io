@@ -1,0 +1,24 @@
+---
+import Section from './Section.astro';
+import TelegramPostCard from './TelegramPostCard.astro';
+
+interface Props {
+  posts: any[];
+}
+
+const { posts } = Astro.props;
+---
+
+<Section>
+  <div class="flex justify-between pb-4">
+    <p class="text-xl font-bold">Посты</p>
+    <a href="/posts" class="underline hover:text-orange-600">Все посты →</a>
+  </div>
+  <div class="flex flex-col pb-4 md:flex-row">
+    {posts.map((post: any) => (
+      <div class="mb-4 basis-1 last:mr-0 md:mr-4 md:basis-1/3">
+        <TelegramPostCard post={post} />
+      </div>
+    ))}
+  </div>
+</Section>

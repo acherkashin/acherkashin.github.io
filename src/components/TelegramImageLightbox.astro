@@ -1,0 +1,238 @@
+---
+// Full-screen image lightbox with thumbnail navigation
+---
+
+<div id="telegram-lightbox" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-sm">
+  <!-- Close button -->
+  <button
+    id="lightbox-close"
+    class="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+    aria-label="Close lightbox"
+  >
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+
+  <!-- Navigation arrows -->
+  <button
+    id="lightbox-prev"
+    class="absolute left-4 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
+    aria-label="Previous image"
+  >
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+  </button>
+
+  <button
+    id="lightbox-next"
+    class="absolute right-4 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
+    aria-label="Next image"
+  >
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+    </svg>
+  </button>
+
+  <!-- Main image container -->
+  <div class="flex h-full items-center justify-center p-4 pb-32">
+    <img
+      id="lightbox-image"
+      src=""
+      alt=""
+      class="max-h-full max-w-full object-contain"
+    />
+  </div>
+
+  <!-- Thumbnail strip -->
+  <div id="lightbox-thumbnails" class="absolute bottom-0 left-0 right-0 bg-black/50 p-4">
+    <div class="mx-auto flex max-w-4xl gap-2 overflow-x-auto">
+      <!-- Thumbnails will be inserted here -->
+    </div>
+  </div>
+</div>
+
+<style>
+  #lightbox-thumbnails {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
+  
+  #lightbox-thumbnails::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  #lightbox-thumbnails::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  #lightbox-thumbnails::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+</style>
+
+<script>
+  class TelegramLightbox {
+    private lightbox: HTMLElement;
+    private image: HTMLImageElement;
+    private thumbnailsContainer: HTMLElement;
+    private closeBtn: HTMLElement;
+    private prevBtn: HTMLElement;
+    private nextBtn: HTMLElement;
+    private images: string[] = [];
+    private currentIndex: number = 0;
+
+    constructor() {
+      this.lightbox = document.getElementById('telegram-lightbox')!;
+      this.image = document.getElementById('lightbox-image') as HTMLImageElement;
+      this.thumbnailsContainer = document.getElementById('lightbox-thumbnails')!.querySelector('div')!;
+      this.closeBtn = document.getElementById('lightbox-close')!;
+      this.prevBtn = document.getElementById('lightbox-prev')!;
+      this.nextBtn = document.getElementById('lightbox-next')!;
+
+      this.setupEventListeners();
+      this.setupGalleryListeners();
+    }
+
+    private setupEventListeners() {
+      // Close button
+      this.closeBtn.addEventListener('click', () => this.close());
+
+      // Navigation buttons
+      this.prevBtn.addEventListener('click', () => this.navigate(-1));
+      this.nextBtn.addEventListener('click', () => this.navigate(1));
+
+      // Click outside to close
+      this.lightbox.addEventListener('click', (e) => {
+        if (e.target === this.lightbox) {
+          this.close();
+        }
+      });
+
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (!this.lightbox.classList.contains('hidden')) {
+          if (e.key === 'Escape') this.close();
+          if (e.key === 'ArrowLeft') this.navigate(-1);
+          if (e.key === 'ArrowRight') this.navigate(1);
+        }
+      });
+    }
+
+    private setupGalleryListeners() {
+      // Add click listeners to all gallery images
+      document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('lightbox-trigger')) {
+          e.preventDefault();
+          const container = target.closest('[data-lightbox-gallery]');
+          if (container) {
+            const images = Array.from(container.querySelectorAll('.lightbox-trigger')).map(
+              (img) => (img as HTMLImageElement).src
+            );
+            const index = Array.from(container.querySelectorAll('.lightbox-trigger')).indexOf(target);
+            this.open(images, index);
+          }
+        }
+      });
+    }
+
+    public open(images: string[], startIndex: number = 0) {
+      if (images.length === 0) {
+        return;
+      }
+
+      this.images = images;
+      this.currentIndex = startIndex >= 0 && startIndex < images.length ? startIndex : 0;
+      this.lightbox.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      this.updateImage();
+      this.updateThumbnails();
+      this.updateNavButtons();
+    }
+
+    public close() {
+      this.lightbox.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    private navigate(direction: number) {
+      if (this.images.length === 0) {
+        return;
+      }
+
+      this.currentIndex = (this.currentIndex + direction + this.images.length) % this.images.length;
+      this.updateImage();
+      this.updateThumbnails();
+    }
+
+    private updateImage() {
+      const src = this.images[this.currentIndex];
+      if (!src) {
+        return;
+      }
+
+      this.image.src = src;
+    }
+
+    private updateThumbnails() {
+      if (this.images.length <= 1) {
+        this.thumbnailsContainer.parentElement!.style.display = 'none';
+        return;
+      }
+
+      this.thumbnailsContainer.parentElement!.style.display = 'block';
+      this.thumbnailsContainer.innerHTML = this.images
+        .map((src, index) => {
+          const isActive = index === this.currentIndex;
+          return `
+            <button
+              class="flex-shrink-0 overflow-hidden rounded-lg transition-all ${
+                isActive ? 'ring-2 ring-white ring-offset-2 ring-offset-black' : 'opacity-60 hover:opacity-100'
+              }"
+              data-index="${index}"
+            >
+              <img
+                src="${src}"
+                alt="Thumbnail ${index + 1}"
+                class="h-16 w-16 object-cover"
+              />
+            </button>
+          `;
+        })
+        .join('');
+
+      // Add click listeners to thumbnails
+      this.thumbnailsContainer.querySelectorAll('button').forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+          this.currentIndex = index;
+          this.updateImage();
+          this.updateThumbnails();
+        });
+      });
+
+      // Scroll active thumbnail into view
+      const activeThumbnail = this.thumbnailsContainer.querySelector(`[data-index="${this.currentIndex}"]`);
+      if (activeThumbnail) {
+        activeThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+
+    private updateNavButtons() {
+      if (this.images.length > 1) {
+        this.prevBtn.classList.remove('hidden');
+        this.nextBtn.classList.remove('hidden');
+      } else {
+        this.prevBtn.classList.add('hidden');
+        this.nextBtn.classList.add('hidden');
+      }
+    }
+  }
+
+  // Initialize lightbox
+  if (typeof window !== 'undefined') {
+    new TelegramLightbox();
+  }
+</script>

@@ -1,0 +1,72 @@
+---
+interface Props {
+  title?: string;
+  text?: string;
+  url?: string;
+  count?: number | null;
+  className?: string;
+}
+
+const { title = '', text = '', url = '', count = null, className = '' } = Astro.props;
+const hasCount = typeof count === 'number' && Number.isFinite(count) && count > 0;
+const formattedCount = hasCount ? count.toLocaleString('ru-RU') : '';
+const buttonClass = hasCount
+  ? 'share-button inline-flex h-9 items-center gap-1.5 rounded-xl bg-stone-600 px-3 text-xs font-bold text-white transition-colors hover:bg-stone-500'
+  : 'share-button inline-flex h-9 w-9 items-center justify-center rounded-full bg-stone-600 text-white transition-colors hover:bg-stone-500';
+---
+
+<button
+  type="button"
+  class={`${buttonClass} ${className}`}
+  data-share-button
+  data-share-title={title}
+  data-share-text={text}
+  data-share-url={url}
+  aria-label={hasCount ? `Share (${formattedCount})` : 'Share'}
+>
+  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342 15.316 16.658M15.316 7.342 8.684 10.658M18 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM6 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+  </svg>
+  {hasCount && <span>{formattedCount}</span>}
+  <span class="sr-only">Share</span>
+</button>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const buttons = document.querySelectorAll('[data-share-button]');
+
+    buttons.forEach((node) => {
+      const button = node as HTMLButtonElement;
+      if (button.dataset.shareBound === 'true') return;
+      button.dataset.shareBound = 'true';
+
+      button.addEventListener('click', async () => {
+        const title = button.dataset.shareTitle || document.title;
+        const text = button.dataset.shareText || '';
+        const url = button.dataset.shareUrl || window.location.href;
+
+        if (navigator.share) {
+          try {
+            await navigator.share({ title, text, url });
+            return;
+          } catch (error: any) {
+            if (error?.name === 'AbortError') return;
+          }
+        }
+
+        if (navigator.clipboard?.writeText) {
+          try {
+            await navigator.clipboard.writeText(url);
+            const initialLabel = button.getAttribute('aria-label') || 'Share';
+            button.setAttribute('aria-label', 'Link copied');
+            window.setTimeout(() => {
+              button.setAttribute('aria-label', initialLabel);
+            }, 1200);
+          } catch {
+            // Ignore clipboard errors silently.
+          }
+        }
+      });
+    });
+  });
+</script>

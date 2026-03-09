@@ -4,19 +4,33 @@ import Base from '@/layouts/Base.astro';
 import Section from '@/components/Section.astro';
 import Tags from '@/components/Tags.astro';
 import Heading from '@/components/Heading.astro';
+import { extractTelegramTagsFromMarkdown } from '@/utils/telegram-tags.util';
 import { MDXInstance, MarkdownInstance } from 'astro';
 
 const { title } = AppConfig;
 const { description } = AppConfig;
 
-const allPosts = await Astro.glob<MDXInstance<any> | MarkdownInstance<any>>('../articles/*.(md|mdx)');
+const articlePosts = await Astro.glob<MDXInstance<any> | MarkdownInstance<any>>('../articles/*.(md|mdx)');
+const telegramPosts = await Astro.glob<MarkdownInstance<any>>('../posts/*.md');
 
-const allTags: Set<string> = new Set(allPosts.map((post) => post.frontmatter.tags).flat());
+const articleTags = articlePosts.flatMap((post) =>
+	(post.frontmatter.tags || [])
+		.filter((tag: unknown): tag is string => typeof tag === 'string')
+		.map((tag: string) => tag.toLowerCase())
+);
+
+const telegramTags = telegramPosts.flatMap((post) => {
+	const rawContent = typeof post.rawContent === 'function' ? post.rawContent() : '';
+	return extractTelegramTagsFromMarkdown(rawContent);
+});
+
+const allTags: Set<string> = new Set([...articleTags, ...telegramTags]);
+const sortedTags = [...allTags].sort((a, b) => a.localeCompare(b, 'ru-RU'));
 ---
 
 <Base head={{ title, description }}>
 	<Section><Heading title="Теги" /></Section>
 	<div class="mx-auto w-full max-w-screen-md">
-		<Tags tags={[...allTags]} withHref={true} />
+		<Tags tags={sortedTags} withHref={true} />
 	</div>
 </Base>

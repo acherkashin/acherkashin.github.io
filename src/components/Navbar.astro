@@ -24,15 +24,25 @@ import Section from './Section.astro';
 			>
 		</div>
 		<div class="flex items-center">
-			<nav>
-				<ul class="hidden flex-row sm:flex">
-					<li>
-						<a href="https://t.me/s/cherkashindev" class="mr-3 hover:text-orange-600">Посты</a>
-					</li>
-					<li><a href="/tags" class="mr-3 hover:text-orange-600">Теги</a></li>
-					<li><a href="/" class="hover:text-orange-600">Блог</a></li>
-				</ul>
-			</nav>
+<nav>
+<ul class="hidden flex-row sm:flex">
+<li>
+<a href="/rss.xml" class="mr-3 inline-flex items-center gap-1 hover:text-orange-600" aria-label="RSS лента">
+	<svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+		<circle cx="6.18" cy="17.82" r="2.18"></circle>
+		<path d="M4 11a9 9 0 0 1 9 9H9a5 5 0 0 0-5-5v-4z"></path>
+		<path d="M4 4a16 16 0 0 1 16 16h-4A12 12 0 0 0 4 8V4z"></path>
+	</svg>
+	RSS
+</a>
+</li>
+<li>
+<a href="/posts" class="mr-3 hover:text-orange-600">Посты</a>
+</li>
+<li><a href="/tags" class="mr-3 hover:text-orange-600">Теги</a></li>
+<li><a href="/" class="hover:text-orange-600">Блог</a></li>
+</ul>
+</nav>
 			<div class="ml-3 flex flex-col justify-center">
 				<input type="checkbox" id="light-switch" class="light-switch sr-only" />
 				<label class="tada relative cursor-pointer p-2" for="light-switch">
