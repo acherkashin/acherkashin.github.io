@@ -67,7 +67,8 @@ This file is in BETA. Please test and contribute to the discussion:
 -->
 <xsl:stylesheet version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"
-                xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+                xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+                xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <xsl:output method="html" version="1.0" encoding="UTF-8" indent="yes"/>
   <xsl:template match="/">
     <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
@@ -129,6 +130,20 @@ This file is in BETA. Please test and contribute to the discussion:
                   <xsl:value-of select="title"/>
                 </a>
               </h3>
+              <xsl:if test="string-length(normalize-space(description)) > 0 or string-length(normalize-space(content:encoded)) > 0">
+                <p class="mt-1 mb-1 text-gray">
+                  <xsl:choose>
+                    <xsl:when test="string-length(normalize-space(description)) > 0">
+                      <xsl:value-of select="substring(normalize-space(description), 1, 280)"/>
+                      <xsl:if test="string-length(normalize-space(description)) > 280">…</xsl:if>
+                    </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:value-of select="substring(normalize-space(content:encoded), 1, 280)"/>
+                      <xsl:if test="string-length(normalize-space(content:encoded)) > 280">…</xsl:if>
+                    </xsl:otherwise>
+                  </xsl:choose>
+                </p>
+              </xsl:if>
               <small class="text-gray">
                 Published: <xsl:value-of select="pubDate" />
               </small>

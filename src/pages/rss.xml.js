@@ -1,8 +1,9 @@
 import rss from '@astrojs/rss';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { AppConfig } from '../utils/AppConfig';
-import { getFirstMeaningfulParagraph } from '../utils/markdown-text.util';
+import { buildTextPreview } from '../utils/markdown-text.util';
+
+const MAX_RSS_TITLE_LENGTH = 100;
+const RSS_PREVIEW_LENGTH = 320;
 
 export async function GET(context) {
   const [articleEntries, postEntries] = await Promise.all([
@@ -78,23 +79,67 @@ function getPostDate(frontmatter) {
   return getValidDate(frontmatter.createdDate ?? frontmatter.publishDate);
 }
 
-async function getPostDescriptionFromBody(filePath, fallbackTitle) {
-  const sourcePath = resolve(process.cwd(), 'src/pages', filePath.replace(/^\.\//, ''));
-  const source = await readFile(sourcePath, 'utf8');
-  return getFirstMeaningfulParagraph(source) || fallbackTitle;
+function resolveDescription({ frontmatter, previewText, fallbackTitle }) {
+  return firstNonEmpty(
+    frontmatter?.description,
+    frontmatter?.excerpt,
+    previewText,
+    fallbackTitle
+  );
+}
+
+function firstNonEmpty(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return '';
+}
+
+function truncateText(text, maxLength) {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  const truncated = text.slice(0, maxLength).replace(/\s+\S*$/, '').trim();
+  return `${truncated}…`;
+}
+
+function toRssTitle(title) {
+  return truncateText(firstNonEmpty(title, 'Untitled'), MAX_RSS_TITLE_LENGTH);
+}
+
+function getRawMarkdown(module) {
+  if (typeof module?.rawContent !== 'function') {
+    return '';
+  }
+  return module.rawContent();
 }
 
 async function entryToPostRssItem(entry) {
-  const { module, filePath } = entry;
+  const { module } = entry;
   const { frontmatter, url } = module;
+  const title = toRssTitle(frontmatter.title);
   const parsedDate = getPostDate(frontmatter);
-  const description = await getPostDescriptionFromBody(filePath, frontmatter.title);
+  const markdownSource = getRawMarkdown(module);
+  const previewText = buildTextPreview(markdownSource, RSS_PREVIEW_LENGTH);
+  const compiledContent = typeof module?.compiledContent === 'function'
+    ? await module.compiledContent()
+    : '';
+  const description = resolveDescription({
+    frontmatter,
+    previewText,
+    fallbackTitle: title
+  });
 
   return {
-    title: frontmatter.title,
+    title,
     link: url,
     description,
     pubDate: parsedDate ?? new Date(0),
+    ...(compiledContent ? { content: compiledContent } : {}),
     sortDate: parsedDate
   };
 }
@@ -102,12 +147,19 @@ async function entryToPostRssItem(entry) {
 async function entryToArticleRssItem(entry) {
   const { module } = entry;
   const { frontmatter, url } = module;
+  const title = toRssTitle(frontmatter.title);
   const parsedDate = getArticleDate(frontmatter);
+  const previewText = buildTextPreview(getRawMarkdown(module), RSS_PREVIEW_LENGTH);
+  const description = resolveDescription({
+    frontmatter,
+    previewText,
+    fallbackTitle: title
+  });
 
   return {
-    title: frontmatter.title,
+    title,
     link: url,
-    description: frontmatter.description ?? frontmatter.excerpt ?? frontmatter.title,
+    description,
     pubDate: parsedDate ?? new Date(0),
     sortDate: parsedDate
   };
