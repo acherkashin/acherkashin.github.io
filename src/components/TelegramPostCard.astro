@@ -1,8 +1,10 @@
 ---
 import { formatDate } from '@/utils/data.util';
+import { extractTelegramTagsFromMarkdown } from '@/utils/telegram-tags.util';
 import { toString } from 'mdast-util-to-string';
 import remarkParse from 'remark-parse';
 import TelegramReactions from './TelegramReactions.astro';
+import Tags from './Tags.astro';
 import { unified } from 'unified';
 
 interface Props {
@@ -11,14 +13,14 @@ interface Props {
 
 const { post } = Astro.props;
 const markdownParser = unified().use(remarkParse);
+const rawPostContent = typeof post.rawContent === 'function' ? post.rawContent() : '';
 
 // Get full post text body
 const getPostText = () => {
   // Try rawContent first (gets markdown before compilation)
-  if (typeof post.rawContent === 'function') {
-    const raw = post.rawContent();
+  if (rawPostContent) {
     // Remove frontmatter
-    return raw.replace(/^---[\s\S]*?---\n\n/, '').trim();
+    return rawPostContent.replace(/^---[\s\S]*?---\n\n/, '').trim();
   }
   // Fallback to title
   return post.frontmatter.title || '';
@@ -52,6 +54,7 @@ const getTextPreview = (text: string, maxLength: number = 250) => {
 
 const fullText = getPostText();
 const textPreview = getTextPreview(fullText);
+const postTags = extractTelegramTagsFromMarkdown(rawPostContent);
 
 const firstMedia = post.frontmatter.media?.[0];
 const mediaCount = post.frontmatter.media?.length || 0;
@@ -99,6 +102,12 @@ const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count 
               </p>
             )}
           </div>
+
+          {postTags.length > 0 && (
+            <div class="pb-4">
+              <Tags tags={postTags} />
+            </div>
+          )}
 
           <p class="line-clamp-6 whitespace-pre-wrap text-sm leading-relaxed">{textPreview}</p>
         </div>

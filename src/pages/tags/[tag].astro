@@ -3,50 +3,101 @@ import Section from '@/components/Section.astro';
 import Card from '@/components/Card.astro';
 import Base from '@/layouts/Base.astro';
 import Heading from '@/components/Heading.astro';
+import TelegramPostCard from '@/components/TelegramPostCard.astro';
 import { AppConfig } from '@/utils/AppConfig';
+import { extractTelegramTagsFromMarkdown } from '@/utils/telegram-tags.util';
 import { MarkdownInstance, MDXInstance } from 'astro';
 
 export async function getStaticPaths(): Promise<any> {
-	const allPosts = await Astro.glob<MDXInstance<any> | MarkdownInstance<any>>('../articles/*.(md|mdx)');
+	const articlePosts = await Astro.glob<MDXInstance<any> | MarkdownInstance<any>>('../articles/*.(md|mdx)');
+	const telegramPosts = await Astro.glob<MarkdownInstance<any>>('../posts/*.md');
 
-	const allTags: Set<string> = new Set(
-		allPosts.map((post) => post.frontmatter.tags).flat()
-	);
+	const tagsMap = new Map<
+		string,
+		{
+			articles: Array<MDXInstance<any> | MarkdownInstance<any>>;
+			telegram: Array<MarkdownInstance<any>>;
+		}
+	>();
 
-	return [...allTags].map((tag) => ({
-		params: { tag: tag },
+	const ensureTagEntry = (tag: string) => {
+		const existing = tagsMap.get(tag);
+		if (existing) return existing;
+		const created = { articles: [], telegram: [] } as {
+			articles: Array<MDXInstance<any> | MarkdownInstance<any>>;
+			telegram: Array<MarkdownInstance<any>>;
+		};
+		tagsMap.set(tag, created);
+		return created;
+	};
+
+	for (const post of articlePosts) {
+		const tags = Array.isArray(post.frontmatter.tags) ? post.frontmatter.tags : [];
+		for (const rawTag of tags) {
+			if (typeof rawTag !== 'string') continue;
+			const tag = rawTag.trim().toLowerCase();
+			if (!tag) continue;
+			ensureTagEntry(tag).articles.push(post);
+		}
+	}
+
+	for (const post of telegramPosts) {
+		const rawContent = typeof post.rawContent === 'function' ? post.rawContent() : '';
+		const tags = extractTelegramTagsFromMarkdown(rawContent);
+		for (const tag of tags) {
+			ensureTagEntry(tag).telegram.push(post);
+		}
+	}
+
+	return [...tagsMap.entries()].map(([tag, value]) => ({
+		params: { tag },
 		props: {
-			posts: allPosts.filter((post) =>
-				post.frontmatter.tags.includes(tag)
-			)
+			articles: value.articles,
+			telegramPosts: value.telegram
 		}
 	}));
 }
 
 interface Props {
-	posts: MarkdownInstance<Record<string, any>>[];
+	articles: Array<MDXInstance<any> | MarkdownInstance<any>>;
+	telegramPosts: Array<MarkdownInstance<any>>;
 }
 
-const { tag } = Astro.params;
+const { tag: rawTag = '' } = Astro.params as { tag?: string };
+const tag = rawTag.toLowerCase();
 const title = AppConfig.title;
 const description = AppConfig.description;
 
-const { posts } = Astro.props;
+const { articles, telegramPosts } = Astro.props as Props;
+const taggedItems = [
+	...articles.map((post) => ({
+		type: 'article' as const,
+		post,
+		publishDate: post.frontmatter.pubDate
+	})),
+	...telegramPosts.map((post) => ({
+		type: 'telegram' as const,
+		post,
+		publishDate: post.frontmatter.publishDate
+	}))
+].sort((a, b) => {
+	const aDate = new Date(a.publishDate || '').getTime();
+	const bDate = new Date(b.publishDate || '').getTime();
+	return bDate - aDate;
+});
 ---
 
 <Base head={{ title, description }}>
 	<Section>
-		<Heading title={`Статьи с тегом #${tag}`} />
+		<Heading title={`Материалы с тегом #${tag}`} />
 	</Section>
 	<Section>
 		{
-			posts
-				.filter((post: any) => post.frontmatter.tags?.includes(tag))
-				.map((post: any) => (
-					<div class="mb-4 basis-1 last:mb-0">
-						<Card post={post} />
-					</div>
-				))
+			taggedItems.map((item) => (
+				<div class="mb-4 basis-1 last:mb-0">
+					{item.type === 'article' ? <Card post={item.post} /> : <TelegramPostCard post={item.post} />}
+				</div>
+			))
 		}
 	</Section>
 </Base>

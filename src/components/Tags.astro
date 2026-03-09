@@ -15,7 +15,7 @@ const { tags, withHref } = Astro.props;
 					#{tag}
 				</span>
 			);
-			return withHref ? <a href={`/tags/${tag}`}>{element}</a> : element;
+			return withHref ? <a href={`/tags/${encodeURIComponent(tag)}`}>{element}</a> : element;
 		})
 	}
 </div>
