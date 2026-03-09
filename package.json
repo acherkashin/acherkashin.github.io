@@ -10,10 +10,10 @@
 		"astro": "astro",
 		"telegram:session": "node scripts/telegram/generate-session.js",
 		"telegram:export:all": "node scripts/telegram/export-channel-posts.js --all --output .telegram-export",
-		"telegram:export:week": "node scripts/telegram/export-channel-posts.js --days 7 --output .telegram-export",
+		"telegram:export:week": "node scripts/telegram/export-channel-posts.js --days 30 --output .telegram-export",
 		"telegram:convert": "node scripts/telegram/convert-export-to-markdown.js --input .telegram-export",
 		"telegram:sync:bootstrap": "node scripts/telegram/sync-to-astro.js --mode bootstrap",
-		"telegram:sync:week": "node scripts/telegram/sync-to-astro.js --mode week --days 7",
+		"telegram:sync:week": "node scripts/telegram/sync-to-astro.js --mode week --days 30",
 		"telegram:pipeline:bootstrap": "npm run telegram:export:all && npm run telegram:convert && npm run telegram:sync:bootstrap",
 		"telegram:pipeline:week": "npm run telegram:export:week && npm run telegram:convert && npm run telegram:sync:week"
 	},

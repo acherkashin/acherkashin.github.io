@@ -32,14 +32,16 @@ const telegramPostId = Number.isFinite(telegramId)
 const telegramPostUrl = channelSlug && telegramPostId !== null
   ? `https://t.me/${channelSlug}/${telegramPostId}`
   : null;
+const viewsCount = Number(frontmatter.views);
+const hasViews = Number.isFinite(viewsCount) && viewsCount > 0;
+const commentsCount = Number(frontmatter.comments);
 const hasComments =
   frontmatter.comments !== null &&
   frontmatter.comments !== undefined &&
-  Number.isFinite(Number(frontmatter.comments));
-const hasStats =
-  (Array.isArray(frontmatter.reactions) && frontmatter.reactions.length > 0) ||
-  Boolean(frontmatter.views) ||
-  hasComments;
+  Number.isFinite(commentsCount);
+const hasHeaderMetrics = hasViews || hasComments;
+const hasReactions =
+  Array.isArray(frontmatter.reactions) && frontmatter.reactions.length > 0;
 
 const HASHTAG_ONLY_PARAGRAPH_RE = /^(?:#[\p{L}\p{N}_]+(?:\s+|$))+$/u;
 
@@ -66,38 +68,66 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
       <div class="flex flex-col">
         <!-- Header -->
         <div class="mb-4">
-          <p class="text-xs text-stone-600 dark:text-stone-400">
-            {formattedDate}
-            {formattedEditDate && (
-              <span class="ml-2">
-                (изменено: {formattedEditDate})
-              </span>
-            )}
-          </p>
-          {frontmatter.channel && (
-            <p class="mt-1 text-xs font-medium text-stone-700 dark:text-stone-300">
-              Канал: <a 
-                href={`https://t.me/${channelSlug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-orange-700 hover:underline dark:text-orange-500"
-              >
-                {frontmatter.channel}
-              </a>
-              {telegramPostUrl && (
-                <span class="ml-2">
-                  · <a
-                    href={telegramPostUrl}
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs text-stone-600 dark:text-stone-400">
+                {formattedDate}
+                {formattedEditDate && (
+                  <span class="ml-2">
+                    (изменено: {formattedEditDate})
+                  </span>
+                )}
+              </p>
+              {frontmatter.channel && (
+                <p class="mt-1 text-xs font-medium text-stone-700 dark:text-stone-300">
+                  Канал: <a 
+                    href={`https://t.me/${channelSlug}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     class="text-orange-700 hover:underline dark:text-orange-500"
                   >
-                    Открыть в Telegram
+                    {frontmatter.channel}
                   </a>
-                </span>
+                </p>
               )}
-            </p>
-          )}
+            </div>
+            {(hasHeaderMetrics || telegramPostUrl) && (
+              <div class="ml-auto flex items-center justify-end gap-3 text-xs text-stone-600 dark:text-stone-400">
+                {hasViews && (
+                  <span class="flex items-center gap-1">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>{viewsCount.toLocaleString('ru-RU')}</span>
+                  </span>
+                )}
+                {hasComments && (
+                  <span class="flex items-center gap-1">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5m-9 7 3.674-3.674A1 1 0 018.38 17H19a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 001 1.732V21z" />
+                    </svg>
+                    <span>{commentsCount.toLocaleString('ru-RU')}</span>
+                  </span>
+                )}
+                {telegramPostUrl && (
+                  <a
+                    href={telegramPostUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Открыть пост в Telegram"
+                    title="Открыть пост в Telegram"
+                    class="inline-flex items-center text-orange-700 hover:underline dark:text-orange-500"
+                  >
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 2 11 13" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 2 15 22 11 13 2 9 22 2z" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
           {postTags.length > 0 && (
             <div class="mt-3">
               <Tags tags={postTags} withHref={true} />
@@ -124,14 +154,12 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
           </div>
         </PostContent>
 
-        <!-- Reactions and Stats -->
+        <!-- Reactions and Share -->
         <Section>
           <div class="flex items-center justify-end gap-3 border-t border-stone-300 pt-4 dark:border-stone-700">
-            {hasStats && (
+            {hasReactions && (
               <TelegramReactions
                 reactions={frontmatter.reactions || []}
-                views={frontmatter.views}
-                comments={frontmatter.comments}
               />
             )}
             <ShareButton title={frontmatter.title} count={frontmatter.forwards} />
