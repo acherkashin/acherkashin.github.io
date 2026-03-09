@@ -1,12 +1,16 @@
 ---
 import { formatDate } from '@/utils/data.util';
+import { toString } from 'mdast-util-to-string';
+import remarkParse from 'remark-parse';
 import TelegramReactions from './TelegramReactions.astro';
+import { unified } from 'unified';
 
 interface Props {
   post: any;
 }
 
 const { post } = Astro.props;
+const markdownParser = unified().use(remarkParse);
 
 // Get full post text body
 const getPostText = () => {
@@ -20,13 +24,26 @@ const getPostText = () => {
   return post.frontmatter.title || '';
 };
 
+const markdownToPlainText = (markdown: string) => {
+  if (!markdown) return '';
+
+  try {
+    const tree = markdownParser.parse(markdown);
+    return toString(tree);
+  } catch {
+    // Fallback to raw text if parser fails for malformed markdown
+    return markdown;
+  }
+};
+
 // Create text preview
 const getTextPreview = (text: string, maxLength: number = 250) => {
   if (!text) return '';
-  // Remove markdown headers and clean up
-  const cleaned = text
-    .replace(/^#{1,6}\s+/gm, '') // Remove markdown headers
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to plain text
+
+  const cleaned = markdownToPlainText(text)
+    .replace(/\r/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
   
   if (cleaned.length <= maxLength) return cleaned;
