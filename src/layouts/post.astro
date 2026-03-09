@@ -4,12 +4,16 @@ import PostHeader from '@/components/PostHeader.astro';
 import PostContent from '@/components/PostContent.astro';
 import Section from '@/components/Section.astro';
 import ShareButton from '@/components/ShareButton.astro';
+import BackToListButton from '@/components/BackToListButton.astro';
 
 const { frontmatter } = Astro.props;
 ---
 
 <Base head={{ title: frontmatter.title, description: frontmatter.description }}>
 	<div id="content" class="mx-auto w-full max-w-screen-md">
+		<div class="px-4 pt-6">
+			<BackToListButton href="/articles" label="← Все статьи" />
+		</div>
 		<PostHeader
 			title={frontmatter.title}
 			author={frontmatter.author}
