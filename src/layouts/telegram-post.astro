@@ -7,6 +7,7 @@ import TelegramReactions from '@/components/TelegramReactions.astro';
 import TelegramImageLightbox from '@/components/TelegramImageLightbox.astro';
 import ShareButton from '@/components/ShareButton.astro';
 import Tags from '@/components/Tags.astro';
+import BackToListButton from '@/components/BackToListButton.astro';
 import { formatDate } from '@/utils/data.util';
 import { extractTelegramTagsFromMarkdown } from '@/utils/telegram-tags.util';
 
@@ -66,6 +67,9 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
   <div id="content" class="mx-auto w-full max-w-screen-md">
     <Section>
       <div class="flex flex-col">
+        <div class="mb-4">
+          <BackToListButton href="/posts" label="← Все посты" />
+        </div>
         <!-- Header -->
         <div class="mb-4">
           <div class="flex items-start justify-between gap-3">
