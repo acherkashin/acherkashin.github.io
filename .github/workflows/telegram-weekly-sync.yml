@@ -1,0 +1,49 @@
+name: Telegram Weekly Sync
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "0 16 * * 1,3,5" # Mon/Wed/Fri 19:00 Europe/Moscow (16:00 UTC)
+
+permissions:
+  contents: write
+
+jobs:
+  telegram-weekly-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run weekly Telegram pipeline
+        run: npm run telegram:pipeline:week
+        env:
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+          TG_STRING_SESSION: ${{ secrets.TG_STRING_SESSION }}
+          TG_CHANNEL: ${{ vars.TG_CHANNEL }}
+
+      - name: Commit and push changes to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore(posts): weekly telegram sync"
+          git push origin HEAD:main
