@@ -140,8 +140,12 @@
     }
 
     public open(images: string[], startIndex: number = 0) {
+      if (images.length === 0) {
+        return;
+      }
+
       this.images = images;
-      this.currentIndex = startIndex;
+      this.currentIndex = startIndex >= 0 && startIndex < images.length ? startIndex : 0;
       this.lightbox.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
       this.updateImage();
@@ -155,13 +159,22 @@
     }
 
     private navigate(direction: number) {
+      if (this.images.length === 0) {
+        return;
+      }
+
       this.currentIndex = (this.currentIndex + direction + this.images.length) % this.images.length;
       this.updateImage();
       this.updateThumbnails();
     }
 
     private updateImage() {
-      this.image.src = this.images[this.currentIndex];
+      const src = this.images[this.currentIndex];
+      if (!src) {
+        return;
+      }
+
+      this.image.src = src;
     }
 
     private updateThumbnails() {

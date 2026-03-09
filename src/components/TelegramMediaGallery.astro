@@ -321,6 +321,8 @@ const mediaJson = JSON.stringify(media);
         if (!container) return;
         
         const src = media[index];
+        if (!src) return;
+
         const mediaType = isVideo(src) ? 'video' : 'image';
         
         // Clear container and create new element
