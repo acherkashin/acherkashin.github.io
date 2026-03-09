@@ -2,6 +2,8 @@
 import Base from '@/layouts/Base.astro';
 import PostHeader from '@/components/PostHeader.astro';
 import PostContent from '@/components/PostContent.astro';
+import Section from '@/components/Section.astro';
+import ShareButton from '@/components/ShareButton.astro';
 
 const { frontmatter } = Astro.props;
 ---
@@ -19,6 +21,11 @@ const { frontmatter } = Astro.props;
 		<PostContent>
 			<slot />
 		</PostContent>
+		<Section>
+			<div class="flex justify-end border-t border-stone-300 pt-4 dark:border-stone-700">
+				<ShareButton title={frontmatter.title} />
+			</div>
+		</Section>
 		<script define:vars={{ articleId: frontmatter.id }}>
 			// Check if 'dark-mode' is set to 'true' in localStorage
 			const isDarkMode = localStorage.getItem('dark-mode') === 'true';

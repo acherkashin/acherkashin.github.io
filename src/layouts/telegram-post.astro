@@ -5,6 +5,7 @@ import PostContent from '@/components/PostContent.astro';
 import TelegramMediaGallery from '@/components/TelegramMediaGallery.astro';
 import TelegramReactions from '@/components/TelegramReactions.astro';
 import TelegramImageLightbox from '@/components/TelegramImageLightbox.astro';
+import ShareButton from '@/components/ShareButton.astro';
 import Tags from '@/components/Tags.astro';
 import { formatDate } from '@/utils/data.util';
 import { extractTelegramTagsFromMarkdown } from '@/utils/telegram-tags.util';
@@ -89,17 +90,17 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
         </PostContent>
 
         <!-- Reactions and Stats -->
-        {(frontmatter.reactions?.length > 0 || frontmatter.views || frontmatter.forwards) && (
-          <Section>
-            <div class="flex justify-end border-t border-stone-300 pt-4 dark:border-stone-700">
+        <Section>
+          <div class="flex items-center justify-end gap-3 border-t border-stone-300 pt-4 dark:border-stone-700">
+            {(frontmatter.reactions?.length > 0 || frontmatter.views) && (
               <TelegramReactions
                 reactions={frontmatter.reactions || []}
                 views={frontmatter.views}
-                forwards={frontmatter.forwards}
               />
-            </div>
-          </Section>
-        )}
+            )}
+            <ShareButton title={frontmatter.title} count={frontmatter.forwards} />
+          </div>
+        </Section>
       </div>
     </Section>
   </div>
