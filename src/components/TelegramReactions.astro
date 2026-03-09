@@ -18,15 +18,13 @@ const { reactions, views, forwards, className = '' } = Astro.props;
 const displayReactions = reactions
   .filter(r => r.reaction !== 'unknown')
   .sort((a, b) => b.count - a.count);
-
-const totalReactions = reactions.reduce((sum, r) => sum + r.count, 0);
 ---
 
 <div class={`flex flex-wrap items-center gap-2 text-sm ${className}`}>
   {displayReactions.length > 0 && (
     <div class="flex flex-wrap gap-1.5">
       {displayReactions.map((r) => (
-        <span class="inline-flex items-center gap-1 rounded-full bg-stone-300/80 px-2.5 py-1 text-xs font-medium text-stone-700 dark:bg-stone-700/80 dark:text-stone-300">
+        <span class="inline-flex items-center gap-1 rounded-xl bg-stone-600 px-3 py-1 text-xs font-bold text-white">
           <span class="text-base leading-none">{r.reaction}</span>
           <span>{r.count}</span>
         </span>
