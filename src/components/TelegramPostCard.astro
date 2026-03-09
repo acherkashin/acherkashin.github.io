@@ -56,9 +56,11 @@ const fullText = getPostText();
 const textPreview = getTextPreview(fullText);
 const postTags = extractTelegramTagsFromMarkdown(rawPostContent);
 
-const firstMedia = post.frontmatter.media?.[0];
-const mediaCount = post.frontmatter.media?.length || 0;
-const hasMedia = mediaCount > 0;
+const mediaList: string[] = Array.isArray(post.frontmatter.media) ? post.frontmatter.media : [];
+const mediaCount = mediaList.length;
+const isVideoMedia = (src: string) => /\.(mp4|mov|webm|m4v|ogg)(?:[?#].*)?$/i.test(src);
+const previewImage = mediaList.find((src) => !isVideoMedia(src));
+const hasPreviewImage = Boolean(previewImage);
 const reactions = post.frontmatter.reactions || [];
 const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count > 0);
 ---
@@ -70,11 +72,11 @@ const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count 
     <div
       class="flex h-full flex-col rounded-[1rem] bg-stone-300 text-gray-900 opacity-90 dark:bg-stone-800 dark:text-white"
     >
-      <!-- Media Preview (only if media exists) -->
-      {hasMedia && firstMedia && (
+      <!-- Media Preview (only if an image preview is available) -->
+      {hasPreviewImage && previewImage && (
         <div class="relative overflow-hidden rounded-t-[1rem]">
           <img
-            src={firstMedia}
+            src={previewImage}
             alt="Post preview"
             class="h-48 w-full object-cover transition-transform group-hover:scale-105"
             loading="lazy"
