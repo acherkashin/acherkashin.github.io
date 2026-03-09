@@ -1,67 +1,17 @@
 ---
 import { formatDate } from '@/utils/data.util';
+import { buildTextPreview } from '@/utils/markdown-text.util';
 import { extractTelegramTagsFromMarkdown } from '@/utils/telegram-tags.util';
-import { toString } from 'mdast-util-to-string';
-import remarkParse from 'remark-parse';
 import TelegramReactions from './TelegramReactions.astro';
 import Tags from './Tags.astro';
-import { unified } from 'unified';
 
 interface Props {
   post: any;
 }
 
 const { post } = Astro.props;
-const markdownParser = unified().use(remarkParse);
 const rawPostContent = typeof post.rawContent === 'function' ? post.rawContent() : '';
-
-// Get full post text body
-const getPostText = () => {
-  // Try rawContent first (gets markdown before compilation)
-  if (rawPostContent) {
-    // Remove frontmatter
-    return rawPostContent.replace(/^---[\s\S]*?---\n\n/, '').trim();
-  }
-  // Fallback to title
-  return post.frontmatter.title || '';
-};
-
-const markdownToPlainText = (markdown: string) => {
-  if (!markdown) return '';
-
-  try {
-    const tree = markdownParser.parse(markdown);
-    type MdastNode = Parameters<typeof toString>[0];
-    const children = Array.isArray((tree as { children?: unknown }).children)
-      ? ((tree as { children: MdastNode[] }).children)
-      : [tree as MdastNode];
-
-    return children
-      .map((node) => toString(node))
-      .filter((chunk) => chunk.trim().length > 0)
-      .join('\n\n');
-  } catch {
-    // Fallback to raw text if parser fails for malformed markdown
-    return markdown;
-  }
-};
-
-// Create text preview
-const getTextPreview = (text: string, maxLength: number = 250) => {
-  if (!text) return '';
-
-  const cleaned = markdownToPlainText(text)
-    .replace(/\r/g, '')
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  
-  if (cleaned.length <= maxLength) return cleaned;
-  return cleaned.slice(0, maxLength) + '...';
-};
-
-const fullText = getPostText();
-const textPreview = getTextPreview(fullText);
+const textPreview = buildTextPreview(rawPostContent, 250) || post.frontmatter.title || '';
 const postTags = extractTelegramTagsFromMarkdown(rawPostContent);
 
 const mediaList: string[] = Array.isArray(post.frontmatter.media) ? post.frontmatter.media : [];
