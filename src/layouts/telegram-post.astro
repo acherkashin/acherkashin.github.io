@@ -17,6 +17,29 @@ const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updat
 const rawPostContent = typeof rawContent === 'function' ? rawContent() : '';
 const postTags = extractTelegramTagsFromMarkdown(rawPostContent);
 const compiledPostContent = typeof compiledContent === 'function' ? await compiledContent() : '';
+const channelSlug = typeof frontmatter.channel === 'string'
+  ? frontmatter.channel.replace(/^@/, '').trim()
+  : '';
+const telegramId = Number(frontmatter.telegramId);
+const fallbackTelegramId = Number(
+  Array.isArray(frontmatter.telegramMessageIds) ? frontmatter.telegramMessageIds[0] : NaN
+);
+const telegramPostId = Number.isFinite(telegramId)
+  ? telegramId
+  : Number.isFinite(fallbackTelegramId)
+    ? fallbackTelegramId
+    : null;
+const telegramPostUrl = channelSlug && telegramPostId !== null
+  ? `https://t.me/${channelSlug}/${telegramPostId}`
+  : null;
+const hasComments =
+  frontmatter.comments !== null &&
+  frontmatter.comments !== undefined &&
+  Number.isFinite(Number(frontmatter.comments));
+const hasStats =
+  (Array.isArray(frontmatter.reactions) && frontmatter.reactions.length > 0) ||
+  Boolean(frontmatter.views) ||
+  hasComments;
 
 const HASHTAG_ONLY_PARAGRAPH_RE = /^(?:#[\p{L}\p{N}_]+(?:\s+|$))+$/u;
 
@@ -54,13 +77,25 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
           {frontmatter.channel && (
             <p class="mt-1 text-xs font-medium text-stone-700 dark:text-stone-300">
               Канал: <a 
-                href={`https://t.me/${frontmatter.channel.replace('@', '')}`}
+                href={`https://t.me/${channelSlug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-orange-700 hover:underline dark:text-orange-500"
               >
                 {frontmatter.channel}
               </a>
+              {telegramPostUrl && (
+                <span class="ml-2">
+                  · <a
+                    href={telegramPostUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-orange-700 hover:underline dark:text-orange-500"
+                  >
+                    Открыть в Telegram
+                  </a>
+                </span>
+              )}
             </p>
           )}
           {postTags.length > 0 && (
@@ -92,10 +127,11 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
         <!-- Reactions and Stats -->
         <Section>
           <div class="flex items-center justify-end gap-3 border-t border-stone-300 pt-4 dark:border-stone-700">
-            {(frontmatter.reactions?.length > 0 || frontmatter.views) && (
+            {hasStats && (
               <TelegramReactions
                 reactions={frontmatter.reactions || []}
                 views={frontmatter.views}
+                comments={frontmatter.comments}
               />
             )}
             <ShareButton title={frontmatter.title} count={frontmatter.forwards} />

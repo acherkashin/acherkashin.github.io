@@ -61,6 +61,13 @@ const mediaCount = mediaList.length;
 const isVideoMedia = (src: string) => /\.(mp4|mov|webm|m4v|ogg)(?:[?#].*)?$/i.test(src);
 const previewImage = mediaList.find((src) => !isVideoMedia(src));
 const hasPreviewImage = Boolean(previewImage);
+const hasViews = Boolean(post.frontmatter.views);
+const viewsCount = Number(post.frontmatter.views);
+const commentsCount = Number(post.frontmatter.comments);
+const hasComments =
+  post.frontmatter.comments !== null &&
+  post.frontmatter.comments !== undefined &&
+  Number.isFinite(commentsCount);
 const reactions = post.frontmatter.reactions || [];
 const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count > 0);
 ---
@@ -94,14 +101,26 @@ const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count 
         <div class="flex-1">
           <div class="mb-3 flex justify-between text-xs text-stone-600 dark:text-stone-400">
             <p>{formatDate(post.frontmatter.publishDate)}</p>
-            {post.frontmatter.views && (
-              <p class="flex items-center gap-1">
-                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                {post.frontmatter.views.toLocaleString('ru-RU')}
-              </p>
+            {(hasViews || hasComments) && (
+              <div class="flex items-center gap-2">
+                {hasViews && (
+                  <p class="flex items-center gap-1">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    {viewsCount.toLocaleString('ru-RU')}
+                  </p>
+                )}
+                {hasComments && (
+                  <p class="flex items-center gap-1">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5m-9 7 3.674-3.674A1 1 0 018.38 17H19a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 001 1.732V21z" />
+                    </svg>
+                    {commentsCount.toLocaleString('ru-RU')}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 

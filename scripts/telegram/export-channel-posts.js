@@ -448,6 +448,7 @@ async function main() {
     const text = message.message ?? "";
     const entities = serializeMessageEntities(message.entities ?? []);
     const reactions = parseReactions(message.reactions);
+    const comments = Number(message.replies?.replies);
 
     const editDate = normalizeTelegramDate(message.editDate);
     posts.push({
@@ -458,6 +459,7 @@ async function main() {
       entities,
       views: message.views ?? null,
       forwards: message.forwards ?? null,
+      comments: Number.isFinite(comments) ? comments : null,
       reactions,
       media: mediaFiles,
       groupedId: message.groupedId ? message.groupedId.toString() : null,

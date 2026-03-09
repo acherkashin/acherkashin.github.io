@@ -450,6 +450,7 @@ function buildFrontmatter(group, payloadMeta, mediaLinks, customReactionEmojiMap
       channel: payloadMeta?.channel ?? null,
       views: computeMaxNumeric(group, "views"),
       forwards: computeMaxNumeric(group, "forwards"),
+      comments: computeMaxNumeric(group, "comments"),
       reactions: aggregateReactions(group, customReactionEmojiMap),
       media: mediaLinks,
     },
