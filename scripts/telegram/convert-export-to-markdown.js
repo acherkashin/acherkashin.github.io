@@ -7,6 +7,7 @@ const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".av
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".webm", ".m4v"]);
 const MEDIA_LIMIT = 10;
 const MARKDOWN_ESCAPE_RE = /[\\`*_[\]()~|]/g;
+const CUSTOM_REACTION_PREFIX = "custom:";
 const ENTITY_PRIORITY = new Map([
   ["MessageEntityPre", 0],
   ["MessageEntityCode", 1],
@@ -70,6 +71,19 @@ function dedupeAdjacent(values) {
     }
   }
   return output;
+}
+
+function parseCustomReactionEmojiMap(rawMap) {
+  const map = new Map();
+  if (!isObject(rawMap)) return map;
+  for (const [key, value] of Object.entries(rawMap)) {
+    if (typeof key !== "string") continue;
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    map.set(key, trimmed);
+  }
+  return map;
 }
 
 function yamlScalar(value) {
@@ -297,12 +311,23 @@ function buildGroupedPosts(posts) {
   return Array.from(groups.values()).map((group) => group.slice().sort(comparePost));
 }
 
-function aggregateReactions(group) {
+function normalizeReactionValue(value, customReactionEmojiMap) {
+  if (typeof value !== "string") return "unknown";
+  if (!value.startsWith(CUSTOM_REACTION_PREFIX)) return value;
+  const id = value.slice(CUSTOM_REACTION_PREFIX.length).trim();
+  if (!id) return value;
+  return customReactionEmojiMap.get(id) ?? value;
+}
+
+function aggregateReactions(group, customReactionEmojiMap) {
   const map = new Map();
   for (const post of group) {
     if (!Array.isArray(post.reactions)) continue;
     for (const reaction of post.reactions) {
-      const key = reaction?.reaction ?? "unknown";
+      const key = normalizeReactionValue(
+        reaction?.reaction,
+        customReactionEmojiMap,
+      );
       const count = Number(reaction?.count) || 0;
       map.set(key, (map.get(key) ?? 0) + count);
     }
@@ -402,7 +427,7 @@ function collectRawBody(group) {
   return dedupeAdjacent(chunks).join("\n\n");
 }
 
-function buildFrontmatter(group, payloadMeta, mediaLinks) {
+function buildFrontmatter(group, payloadMeta, mediaLinks, customReactionEmojiMap) {
   const ids = group
     .map((post) => Number(post.id))
     .filter((id) => Number.isFinite(id))
@@ -425,7 +450,7 @@ function buildFrontmatter(group, payloadMeta, mediaLinks) {
       channel: payloadMeta?.channel ?? null,
       views: computeMaxNumeric(group, "views"),
       forwards: computeMaxNumeric(group, "forwards"),
-      reactions: aggregateReactions(group),
+      reactions: aggregateReactions(group, customReactionEmojiMap),
       media: mediaLinks,
     },
   };
@@ -452,6 +477,9 @@ async function main() {
   if (!Array.isArray(payload?.posts)) {
     throw new Error(`Invalid posts.json: "posts" must be an array in ${postsJsonPath}`);
   }
+  const customReactionEmojiMap = parseCustomReactionEmojiMap(
+    payload?.meta?.customReactionEmojiMap,
+  );
 
   const outputDir = path.join(sourceDir, MARKDOWN_DIRNAME);
   await fs.rm(outputDir, { recursive: true, force: true });
@@ -464,7 +492,12 @@ async function main() {
   for (const group of groupedPosts) {
     const sortedGroup = group.slice().sort(comparePost);
     const mediaLinks = await collectMediaLinks(sortedGroup, sourceDir);
-    const { canonicalId, body, data } = buildFrontmatter(sortedGroup, payload.meta, mediaLinks);
+    const { canonicalId, body, data } = buildFrontmatter(
+      sortedGroup,
+      payload.meta,
+      mediaLinks,
+      customReactionEmojiMap,
+    );
 
     if (!body.trim() && mediaLinks.length === 0) {
       continue;

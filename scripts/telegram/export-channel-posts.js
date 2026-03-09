@@ -8,6 +8,8 @@ const DEFAULT_CHANNEL = "@cherkashindev";
 const DEFAULT_DAYS = 7;
 const DEFAULT_OUTPUT_ROOT = path.resolve(process.cwd(), ".telegram-export");
 const ENV_FILE = path.resolve(process.cwd(), ".env");
+const CUSTOM_REACTION_PREFIX = "custom:";
+const CUSTOM_EMOJI_BATCH_SIZE = 200;
 
 function parseArgs(argv) {
   const envChannel = process.env.TG_CHANNEL;
@@ -159,7 +161,7 @@ function parseReactions(reactionsObj) {
     if (item.reaction instanceof Api.ReactionEmoji) {
       reaction = item.reaction.emoticon;
     } else if (item.reaction instanceof Api.ReactionCustomEmoji) {
-      reaction = `custom:${item.reaction.documentId.toString()}`;
+      reaction = `${CUSTOM_REACTION_PREFIX}${item.reaction.documentId.toString()}`;
     }
     return {
       reaction,
@@ -204,6 +206,84 @@ function serializeMessageEntities(entities) {
       return payload;
     })
     .filter(Boolean);
+}
+
+function collectCustomReactionDocumentIds(posts) {
+  const ids = new Set();
+  for (const post of posts) {
+    if (!Array.isArray(post?.reactions)) continue;
+    for (const reaction of post.reactions) {
+      if (typeof reaction?.reaction !== "string") continue;
+      if (!reaction.reaction.startsWith(CUSTOM_REACTION_PREFIX)) continue;
+      const documentId = reaction.reaction.slice(CUSTOM_REACTION_PREFIX.length).trim();
+      if (documentId.length > 0) {
+        ids.add(documentId);
+      }
+    }
+  }
+  return Array.from(ids);
+}
+
+async function resolveCustomReactionEmojiMap(client, documentIds) {
+  const map = new Map();
+  if (!Array.isArray(documentIds) || documentIds.length === 0) {
+    return map;
+  }
+
+  for (let i = 0; i < documentIds.length; i += CUSTOM_EMOJI_BATCH_SIZE) {
+    const batch = documentIds.slice(i, i + CUSTOM_EMOJI_BATCH_SIZE);
+    const normalizedIds = [];
+    for (const value of batch) {
+      try {
+        normalizedIds.push(BigInt(value));
+      } catch {
+        // Ignore malformed IDs.
+      }
+    }
+    if (normalizedIds.length === 0) continue;
+
+    const documents = await withFloodWaitRetry(() =>
+      client.invoke(
+        new Api.messages.GetCustomEmojiDocuments({
+          documentId: normalizedIds,
+        }),
+      ),
+    );
+
+    for (const doc of documents ?? []) {
+      const id = doc?.id?.toString?.();
+      if (!id || !Array.isArray(doc.attributes)) continue;
+      const attr = doc.attributes.find(
+        (item) => item instanceof Api.DocumentAttributeCustomEmoji,
+      );
+      const alt = typeof attr?.alt === "string" ? attr.alt.trim() : "";
+      if (alt) {
+        map.set(id, alt);
+      }
+    }
+  }
+
+  return map;
+}
+
+function applyCustomReactionEmojiMap(posts, emojiMap) {
+  if (!(emojiMap instanceof Map) || emojiMap.size === 0) return;
+  for (const post of posts) {
+    if (!Array.isArray(post?.reactions)) continue;
+    post.reactions = post.reactions.map((reaction) => {
+      if (typeof reaction?.reaction !== "string") return reaction;
+      if (!reaction.reaction.startsWith(CUSTOM_REACTION_PREFIX)) return reaction;
+      const documentId = reaction.reaction.slice(CUSTOM_REACTION_PREFIX.length).trim();
+      const replacement = emojiMap.get(documentId);
+      if (!replacement) return reaction;
+      return { ...reaction, reaction: replacement };
+    });
+  }
+}
+
+function mapToSortedObject(map) {
+  const entries = Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  return Object.fromEntries(entries);
 }
 
 async function withFloodWaitRetry(fn, retries = 3) {
@@ -396,6 +476,13 @@ async function main() {
     return a.date.localeCompare(b.date);
   });
 
+  const customReactionDocumentIds = collectCustomReactionDocumentIds(posts);
+  const customReactionEmojiMap = await resolveCustomReactionEmojiMap(
+    client,
+    customReactionDocumentIds,
+  );
+  applyCustomReactionEmojiMap(posts, customReactionEmojiMap);
+
   const exportPayload = {
     meta: {
       channel: args.channel,
@@ -405,6 +492,7 @@ async function main() {
       scannedMessages: scanned,
       inWindowMessages: withinRangeCount,
       exportedPosts: posts.length,
+      customReactionEmojiMap: mapToSortedObject(customReactionEmojiMap),
     },
     posts,
   };
