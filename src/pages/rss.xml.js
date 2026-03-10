@@ -4,6 +4,7 @@ import { buildTextPreview } from '../utils/markdown-text.util';
 
 const MAX_RSS_TITLE_LENGTH = 100;
 const RSS_PREVIEW_LENGTH = 320;
+const IMAGE_FILE_RE = /\.(avif|gif|jpe?g|png|webp)$/i;
 
 export async function GET(context) {
   const [articleEntries, postEntries] = await Promise.all([
@@ -12,8 +13,8 @@ export async function GET(context) {
   ]);
 
   const [articleItems, postItems] = await Promise.all([
-    Promise.all(articleEntries.map(entryToArticleRssItem)),
-    Promise.all(postEntries.map(entryToPostRssItem))
+    Promise.all(articleEntries.map((entry) => entryToArticleRssItem(entry, context.site))),
+    Promise.all(postEntries.map((entry) => entryToPostRssItem(entry, context.site)))
   ]);
 
   const allItems = [...articleItems, ...postItems].sort((a, b) => {
@@ -34,7 +35,8 @@ export async function GET(context) {
     items: rssItems,
     stylesheet: './rss/styles.xsl',
     xmlns: {
-      atom: 'http://www.w3.org/2005/Atom'
+      atom: 'http://www.w3.org/2005/Atom',
+      media: 'http://search.yahoo.com/mrss/'
     },
     customData: [
       `<language>${language}</language>`,
@@ -76,7 +78,7 @@ function getArticleDate(frontmatter) {
 }
 
 function getPostDate(frontmatter) {
-  return getValidDate(frontmatter.createdDate ?? frontmatter.publishDate);
+  return getValidDate(frontmatter.publishDate ?? frontmatter.createdDate);
 }
 
 function resolveDescription({ frontmatter, previewText, fallbackTitle }) {
@@ -118,7 +120,64 @@ function getRawMarkdown(module) {
   return module.rawContent();
 }
 
-async function entryToPostRssItem(entry) {
+function isImagePath(value) {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const cleanValue = value.split('#')[0].split('?')[0];
+  return IMAGE_FILE_RE.test(cleanValue);
+}
+
+function toAbsoluteUrl(value, site) {
+  if (typeof value !== 'string' || !value.trim() || !site) {
+    return null;
+  }
+
+  try {
+    return new URL(value, site).toString();
+  } catch {
+    return null;
+  }
+}
+
+function escapeXmlAttr(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
+function buildMediaCustomData(coverUrl) {
+  if (!coverUrl) {
+    return '';
+  }
+
+  const safeUrl = escapeXmlAttr(coverUrl);
+  return `<media:content url="${safeUrl}" medium="image" /><media:thumbnail url="${safeUrl}" />`;
+}
+
+function resolveArticleCoverUrl(frontmatter, site) {
+  const imageSource = frontmatter?.image?.src;
+  if (!isImagePath(imageSource)) {
+    return null;
+  }
+
+  return toAbsoluteUrl(imageSource, site);
+}
+
+function resolvePostCoverUrl(frontmatter, site) {
+  const mediaItems = Array.isArray(frontmatter?.media) ? frontmatter.media : [];
+  const firstImage = mediaItems.find((mediaItem) => isImagePath(mediaItem));
+  if (!firstImage) {
+    return null;
+  }
+
+  return toAbsoluteUrl(firstImage, site);
+}
+
+async function entryToPostRssItem(entry, site) {
   const { module } = entry;
   const { frontmatter, url } = module;
   const title = toRssTitle(frontmatter.title);
@@ -133,6 +192,8 @@ async function entryToPostRssItem(entry) {
     previewText,
     fallbackTitle: title
   });
+  const coverUrl = resolvePostCoverUrl(frontmatter, site);
+  const customData = buildMediaCustomData(coverUrl);
 
   return {
     title,
@@ -140,11 +201,12 @@ async function entryToPostRssItem(entry) {
     description,
     pubDate: parsedDate ?? new Date(0),
     ...(compiledContent ? { content: compiledContent } : {}),
+    ...(customData ? { customData } : {}),
     sortDate: parsedDate
   };
 }
 
-async function entryToArticleRssItem(entry) {
+async function entryToArticleRssItem(entry, site) {
   const { module } = entry;
   const { frontmatter, url } = module;
   const title = toRssTitle(frontmatter.title);
@@ -155,12 +217,15 @@ async function entryToArticleRssItem(entry) {
     previewText,
     fallbackTitle: title
   });
+  const coverUrl = resolveArticleCoverUrl(frontmatter, site);
+  const customData = buildMediaCustomData(coverUrl);
 
   return {
     title,
     link: url,
     description,
     pubDate: parsedDate ?? new Date(0),
+    ...(customData ? { customData } : {}),
     sortDate: parsedDate
   };
 }
