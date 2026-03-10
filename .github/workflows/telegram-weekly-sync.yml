@@ -11,6 +11,8 @@ permissions:
 jobs:
   telegram-weekly-sync:
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.commit_and_push.outputs.changed }}
 
     steps:
       - name: Checkout repository
@@ -34,6 +36,7 @@ jobs:
           TG_CHANNEL: ${{ vars.TG_CHANNEL }}
 
       - name: Commit and push changes to main
+        id: commit_and_push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -41,9 +44,33 @@ jobs:
           git add -A
 
           if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No changes to commit"
             exit 0
           fi
 
           git commit -m "chore(posts): weekly telegram sync"
           git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  deploy-pages:
+    needs: telegram-weekly-sync
+    if: needs.telegram-weekly-sync.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Install, build, and upload your site
+        uses: withastro/action@v3
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
