@@ -2,8 +2,8 @@ name: Telegram Weekly Sync
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: "0 16 * * 1,3,5" # Mon/Wed/Fri 19:00 Europe/Moscow (16:00 UTC)
+  schedule:
+    - cron: "0 16 * * 1,3,5" # Mon/Wed/Fri 19:00 Europe/Moscow (16:00 UTC)
 
 permissions:
   contents: write
