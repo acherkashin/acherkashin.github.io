@@ -1,0 +1,529 @@
+---
+import Demo from '@/layouts/Demo.astro';
+
+const textSizes = [12, 14, 16, 20, 24, 32, 40, 56];
+const sampleText = 'The quick brown fox jumps over the lazy dog 0123456789';
+---
+
+<Demo
+	head={{
+		title: 'CSS size-adjust Playground',
+		description: 'Interactive playground for @font-face size-adjust with Inter and Nunito'
+	}}
+>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link
+		rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Nunito:wght@400&display=swap"
+	/>
+
+	<style>
+		:root {
+			color-scheme: light;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+			background:
+				radial-gradient(circle at 20% 10%, #e5e7ff 0%, transparent 35%),
+				radial-gradient(circle at 80% 20%, #d8f6e9 0%, transparent 30%),
+				linear-gradient(165deg, #f6f7fb 0%, #eef2ff 45%, #f8f9ff 100%);
+			color: #0f172a;
+			min-height: 100vh;
+		}
+
+		.playground {
+			--original-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+			--adjusted-family: 'Inter Adjust 100', system-ui, -apple-system, 'Segoe UI', sans-serif;
+			max-width: 1240px;
+			margin: 0 auto;
+			padding: 16px 12px 44px;
+		}
+
+		.layout {
+			display: grid;
+			gap: 12px;
+			align-items: start;
+		}
+
+		.control-column,
+		.samples-column {
+			min-width: 0;
+		}
+
+		.control-column-inner {
+			position: static;
+		}
+
+		.panel {
+			background: rgba(255, 255, 255, 0.78);
+			border: 1px solid rgba(79, 70, 229, 0.16);
+			backdrop-filter: blur(8px);
+			border-radius: 16px;
+			padding: 16px;
+			box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+		}
+
+		h1 {
+			margin: 0 0 8px;
+			font-size: clamp(1.45rem, 2vw + 1rem, 2.25rem);
+			line-height: 1.15;
+			letter-spacing: -0.02em;
+		}
+
+		.lead {
+			margin: 0;
+			color: #334155;
+			font-size: 1rem;
+		}
+
+		.controls {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 12px;
+			margin-top: 14px;
+		}
+
+		.control {
+			display: grid;
+			gap: 8px;
+		}
+
+		.control label {
+			font-size: 0.85rem;
+			font-weight: 600;
+			color: #1e293b;
+		}
+
+		.control select {
+			border: 1px solid #cbd5e1;
+			border-radius: 10px;
+			background-color: #fff;
+			padding: 10px 12px;
+			font-size: 0.95rem;
+			color: #0f172a;
+		}
+
+		.slider-row {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.slider-row input[type='range'] {
+			width: 100%;
+			accent-color: #4f46e5;
+		}
+
+		.slider-value {
+			font-size: 0.85rem;
+			font-weight: 700;
+			color: #3730a3;
+			background: rgba(99, 102, 241, 0.12);
+			border-radius: 999px;
+			padding: 4px 10px;
+			min-width: 58px;
+			text-align: center;
+		}
+
+		.reset-button {
+			justify-self: start;
+			border: 1px solid #cbd5e1;
+			background: #fff;
+			color: #1e293b;
+			border-radius: 9px;
+			padding: 8px 12px;
+			font-size: 0.85rem;
+			font-weight: 600;
+			cursor: pointer;
+		}
+
+		.reset-button:hover {
+			background: #f8fafc;
+		}
+
+		.status {
+			margin-top: 12px;
+			font-size: 0.87rem;
+			color: #334155;
+		}
+
+		.status strong {
+			color: #0f172a;
+		}
+
+		.code-panel {
+			margin-top: 12px;
+			border: 1px solid #dbe4ff;
+			background: #f8faff;
+			border-radius: 12px;
+			padding: 12px;
+		}
+
+		.code-panel-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			margin-bottom: 10px;
+		}
+
+		.code-panel-title {
+			margin: 0;
+			font-size: 0.82rem;
+			font-weight: 700;
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
+			color: #334155;
+		}
+
+		.copy-button {
+			border: 1px solid #c7d2fe;
+			background: #ffffff;
+			color: #3730a3;
+			border-radius: 8px;
+			padding: 6px 10px;
+			font-size: 0.8rem;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.copy-button:hover {
+			background: #eef2ff;
+		}
+
+		.code-preview {
+			margin: 0;
+			background: #0f172a;
+			color: #dbeafe;
+			border-radius: 10px;
+			padding: 12px;
+			font-size: 0.8rem;
+			line-height: 1.45;
+			overflow-x: auto;
+			white-space: pre;
+			font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+			max-height: 240px;
+		}
+
+		.stack {
+			display: grid;
+			gap: 12px;
+		}
+
+		.row {
+			--sample-size: 16px;
+			display: grid;
+			gap: 10px;
+			padding: 12px;
+			border-radius: 14px;
+			background: rgba(255, 255, 255, 0.85);
+			border: 1px solid rgba(148, 163, 184, 0.25);
+		}
+
+		.size-label {
+			display: inline-flex;
+			align-self: start;
+			font-size: 0.75rem;
+			font-weight: 700;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			padding: 5px 8px;
+			border-radius: 999px;
+			color: #3730a3;
+			background: rgba(99, 102, 241, 0.12);
+		}
+
+		.samples {
+			display: grid;
+			gap: 10px;
+		}
+
+		.sample {
+			background: #ffffff;
+			border: 1px solid #e2e8f0;
+			border-radius: 10px;
+			padding: 12px;
+		}
+
+		.sample-header {
+			margin: 0 0 8px;
+			font-size: 0.75rem;
+			font-weight: 700;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			color: #475569;
+		}
+
+		.sample-text {
+			margin: 0;
+			font-size: var(--sample-size);
+			line-height: 1.35;
+			word-break: break-word;
+		}
+
+		.sample[data-kind='original'] .sample-text {
+			font-family: var(--original-family);
+		}
+
+		.sample[data-kind='adjusted'] .sample-text {
+			font-family: var(--adjusted-family);
+		}
+
+		.sample[data-kind='adjusted'] .sample-header {
+			color: #0f766e;
+		}
+
+		.footer-note {
+			margin-top: 12px;
+			font-size: 0.84rem;
+			color: #475569;
+		}
+
+		@media (min-width: 760px) {
+			.row {
+				grid-template-columns: auto 1fr;
+				align-items: start;
+				gap: 14px;
+			}
+
+			.samples {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 12px;
+			}
+		}
+
+		@media (min-width: 980px) {
+			.playground {
+				padding: 18px 18px 56px;
+			}
+
+			.layout {
+				grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+				gap: 14px;
+			}
+
+			.control-column {
+				position: sticky;
+				top: 16px;
+			}
+
+			.control-column-inner {
+				max-height: calc(100vh - 32px);
+				overflow: auto;
+			}
+
+			.samples-panel {
+				padding: 12px;
+			}
+		}
+	</style>
+
+	<main class="playground" data-playground data-font="inter" data-adjust="100">
+		<div class="layout">
+			<aside class="control-column">
+				<section class="panel control-column-inner">
+					<h1>@font-face size-adjust Playground</h1>
+					<p class="lead">
+						Compare original and adjusted rendering across multiple text sizes. This demo uses the
+						<code>size-adjust</code> descriptor in <code>@font-face</code>.
+					</p>
+
+					<div class="controls">
+						<div class="control">
+							<label for="fontFamily">Font</label>
+							<select id="fontFamily" name="fontFamily">
+								<option value="inter">Inter</option>
+								<option value="nunito">Nunito</option>
+							</select>
+						</div>
+
+						<div class="control">
+							<label for="sizeAdjust">Size-adjust value</label>
+							<div class="slider-row">
+								<input
+									id="sizeAdjust"
+									name="sizeAdjust"
+									type="range"
+									min="85"
+									max="130"
+									step="1"
+									value="100"
+								/>
+								<output for="sizeAdjust" id="sizeAdjustValue" class="slider-value">100%</output>
+							</div>
+							<button id="sizeAdjustReset" class="reset-button" type="button">Reset to 100%</button>
+						</div>
+					</div>
+
+					<p class="status" data-status>
+						Current: <strong>Inter</strong> with <strong>100%</strong> size-adjust
+					</p>
+
+					<section class="code-panel">
+						<div class="code-panel-header">
+							<p class="code-panel-title">@font-face CSS</p>
+							<button id="copyFontFaceCss" class="copy-button" type="button">Copy CSS</button>
+						</div>
+						<pre class="code-preview"><code id="fontFaceCssPreview"></code></pre>
+					</section>
+
+					<p class="footer-note">
+						If CDN fonts fail to load, system sans-serif fallback is used for both columns.
+					</p>
+				</section>
+			</aside>
+
+			<section class="samples-column">
+				<section class="panel samples-panel">
+					<div class="stack">
+						{
+							textSizes.map((size) => (
+								<article class="row">
+									<span class="size-label">{size}px</span>
+
+									<div class="samples">
+										<section class="sample" data-kind="original" style={`--sample-size:${size}px`}>
+											<p class="sample-header">Original</p>
+											<p class="sample-text">{sampleText}</p>
+										</section>
+
+										<section class="sample" data-kind="adjusted" style={`--sample-size:${size}px`}>
+											<p class="sample-header">Adjusted</p>
+											<p class="sample-text">{sampleText}</p>
+										</section>
+									</div>
+								</article>
+							))
+						}
+					</div>
+				</section>
+			</section>
+		</div>
+	</main>
+
+	<script is:inline>
+		const FONT_CONFIG = {
+			inter: {
+				label: 'Inter',
+				baseFamily: 'Inter',
+				src: 'https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZg.ttf'
+			},
+			nunito: {
+				label: 'Nunito',
+				baseFamily: 'Nunito',
+				src: 'https://fonts.gstatic.com/s/nunito/v32/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshRTM.ttf'
+			}
+		};
+
+		const playground = document.querySelector('[data-playground]');
+		const fontSelect = document.getElementById('fontFamily');
+		const adjustRange = document.getElementById('sizeAdjust');
+		const adjustValue = document.getElementById('sizeAdjustValue');
+		const resetButton = document.getElementById('sizeAdjustReset');
+		const status = document.querySelector('[data-status]');
+		const codePreview = document.getElementById('fontFaceCssPreview');
+		const copyButton = document.getElementById('copyFontFaceCss');
+
+		const dynamicStyleId = 'dynamic-size-adjust-font-face';
+
+		function getDynamicStyleTag() {
+			let styleTag = document.getElementById(dynamicStyleId);
+			if (!styleTag) {
+				styleTag = document.createElement('style');
+				styleTag.id = dynamicStyleId;
+				document.head.appendChild(styleTag);
+			}
+			return styleTag;
+		}
+
+		function getAdjustedRule(adjustedFamily, fontSrc, selectedAdjust) {
+			return `@font-face {\n  font-family: '${adjustedFamily}';\n  src: url('${fontSrc}') format('truetype');\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  size-adjust: ${selectedAdjust}%;\n}`;
+		}
+
+		function getPreviewCss(baseFamily, adjustedFamily, fontSrc, selectedAdjust) {
+			return `@font-face {\n  font-family: '${baseFamily} Base';\n  src: url('${fontSrc}') format('truetype');\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n}\n\n${getAdjustedRule(adjustedFamily, fontSrc, selectedAdjust)}`;
+		}
+
+		function updatePlayground() {
+			if (!playground || !fontSelect || !adjustRange || !adjustValue || !status || !codePreview) {
+				return;
+			}
+
+			const selectedFontKey = fontSelect.value;
+			const selectedAdjust = Number(adjustRange.value);
+			const fontConfig = FONT_CONFIG[selectedFontKey] || FONT_CONFIG.inter;
+			const adjustedFamily = `${fontConfig.baseFamily} Adjust ${selectedAdjust}`;
+			const fallbackFamily = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+			const styleTag = getDynamicStyleTag();
+			const adjustedRule = getAdjustedRule(adjustedFamily, fontConfig.src, selectedAdjust);
+			const previewCss = getPreviewCss(
+				fontConfig.baseFamily,
+				adjustedFamily,
+				fontConfig.src,
+				selectedAdjust
+			);
+
+			styleTag.textContent = adjustedRule;
+
+			playground.dataset.font = selectedFontKey;
+			playground.dataset.adjust = String(selectedAdjust);
+			playground.style.setProperty('--original-family', `'${fontConfig.baseFamily}', ${fallbackFamily}`);
+			playground.style.setProperty('--adjusted-family', `'${adjustedFamily}', ${fallbackFamily}`);
+			adjustValue.textContent = `${selectedAdjust}%`;
+			codePreview.textContent = previewCss;
+			status.innerHTML = `Current: <strong>${fontConfig.label}</strong> with <strong>${selectedAdjust}%</strong> size-adjust`;
+		}
+
+		fontSelect?.addEventListener('change', updatePlayground);
+		adjustRange?.addEventListener('input', updatePlayground);
+		resetButton?.addEventListener('click', () => {
+			if (!adjustRange) {
+				return;
+			}
+
+			adjustRange.value = '100';
+			updatePlayground();
+		});
+
+		copyButton?.addEventListener('click', async () => {
+			if (!codePreview || !copyButton) {
+				return;
+			}
+
+			const cssText = codePreview.textContent || '';
+			if (!cssText) {
+				return;
+			}
+
+			try {
+				if (!navigator.clipboard || !navigator.clipboard.writeText) {
+					throw new Error('Clipboard API is not available');
+				}
+
+				await navigator.clipboard.writeText(cssText);
+
+				const prevText = copyButton.textContent;
+				copyButton.textContent = 'Copied';
+				setTimeout(() => {
+					copyButton.textContent = prevText;
+				}, 1200);
+			} catch {
+				const prevText = copyButton.textContent;
+				copyButton.textContent = 'Copy failed';
+				setTimeout(() => {
+					copyButton.textContent = prevText;
+				}, 1500);
+			}
+		});
+
+		updatePlayground();
+	</script>
+</Demo>
