@@ -1,0 +1,41 @@
+---
+import type { PlaygroundItem } from '@/utils/playgrounds';
+
+interface Props {
+	playground: PlaygroundItem;
+}
+
+const { playground } = Astro.props as Props;
+const cover = typeof playground.cover === 'string' ? playground.cover.trim() : '';
+const hasCover = cover.length > 0;
+---
+
+<a href={`/demos/${playground.slug}/`} class="group block h-full">
+	<div
+		class="flex h-full flex-col overflow-hidden rounded-2xl bg-stone-200/50 from-orange-900 via-amber-700 to-white p-[1px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)] transition-all hover:bg-gradient-to-r dark:bg-gray-900"
+	>
+		<div
+			class="flex h-full flex-col rounded-[1rem] bg-stone-300 text-gray-900 opacity-90 dark:bg-stone-800 dark:text-white"
+		>
+			{hasCover && (
+				<div class="relative overflow-hidden rounded-t-[1rem]">
+					<img
+						src={cover}
+						alt={playground.title}
+						class="h-48 w-full object-cover transition-transform group-hover:scale-105"
+						loading="lazy"
+					/>
+				</div>
+			)}
+
+			<div class="flex flex-1 flex-col p-4">
+				<div class="flex-1">
+					<p class="pb-4 text-lg font-bold">{playground.title}</p>
+					<p class="line-clamp-6 whitespace-pre-wrap text-sm leading-relaxed">{playground.description}</p>
+				</div>
+
+				<p class="mt-4 text-sm underline">Открыть демо →</p>
+			</div>
+		</div>
+	</div>
+</a>
