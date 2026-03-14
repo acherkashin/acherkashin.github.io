@@ -6,17 +6,29 @@ import Section from './Section.astro';
 	<div class="flex justify-between">
 		<div class="text-3xl font-bold">
 			<a href="/">
-				<img id="blog-logo" class="inline-block h-12 w-12 rounded-full" src="/logo.png" />
-				<script>
-					import { isNewYear } from '@/utils/newYearUtils';
-
-					document.addEventListener('astro:page-load', () => {
+				<img
+					id="blog-logo"
+					class="inline-block h-12 w-12 rounded-full"
+					src="/logo.png"
+					alt="cherkashin.dev logo"
+					width="48"
+					height="48"
+					style="width:48px;height:48px"
+				/>
+				<script is:inline>
+					function applySeasonalLogo() {
 						const logo = document.getElementById('blog-logo');
+						if (!logo) return;
 
-						if (logo && isNewYear()) {
-							logo.setAttribute('src', '/new-year-logo.webp');
-						}
-					});
+						const season = document.documentElement.dataset.season;
+						logo.setAttribute(
+							'src',
+							season === 'new-year' ? '/new-year-logo.webp' : '/logo.png'
+						);
+					}
+
+					document.addEventListener('astro:after-swap', applySeasonalLogo);
+					applySeasonalLogo();
 				</script>
 				<span class="pr-2 text-2xl text-gray-500">{'{'}</span>cherkashin<span
 					class="text-orange-600">.</span

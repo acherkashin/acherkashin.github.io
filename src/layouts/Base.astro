@@ -2,6 +2,15 @@
 import Footer from '@/components/Footer.astro';
 import Navbar from '@/components/Navbar.astro';
 import { AppConfig } from '@/utils/AppConfig';
+import {
+	NEW_YEAR_END_DAY,
+	NEW_YEAR_END_MONTH,
+	NEW_YEAR_SEASON,
+	SEASON_QUERY_NEW_YEAR_VALUE,
+	SEASON_QUERY_PARAM,
+	NEW_YEAR_START_DAY,
+	NEW_YEAR_START_MONTH
+} from '@/utils/newYearUtils';
 import { YandexMetrika } from 'astro-yandex-metrika';
 import { ClientRouter } from 'astro:transitions';
 
@@ -47,6 +56,44 @@ const {
 
 			document.addEventListener('astro:after-swap', applyTheme);
 			applyTheme();
+		</script>
+		<script
+			is:inline
+			define:vars={{
+				newYearEndDay: NEW_YEAR_END_DAY,
+				newYearEndMonth: NEW_YEAR_END_MONTH,
+				newYearSeason: NEW_YEAR_SEASON,
+				seasonQueryNewYearValue: SEASON_QUERY_NEW_YEAR_VALUE,
+				seasonQueryParam: SEASON_QUERY_PARAM,
+				newYearStartDay: NEW_YEAR_START_DAY,
+				newYearStartMonth: NEW_YEAR_START_MONTH
+			}}
+		>
+			function applySeason() {
+				const searchParams = new URLSearchParams(window.location.search);
+				const forcedSeason = searchParams.get(seasonQueryParam);
+				const today = new Date();
+				const month = today.getMonth();
+				const day = today.getDate();
+				const isDateBasedNewYear =
+					(month === newYearStartMonth && day >= newYearStartDay) ||
+					(month === newYearEndMonth && day <= newYearEndDay);
+				const resolvedSeason =
+					forcedSeason === seasonQueryNewYearValue
+						? newYearSeason
+						: isDateBasedNewYear
+							? newYearSeason
+							: null;
+
+				if (resolvedSeason) {
+					document.documentElement.dataset.season = resolvedSeason;
+				} else {
+					delete document.documentElement.dataset.season;
+				}
+			}
+
+			document.addEventListener('astro:after-swap', applySeason);
+			applySeason();
 		</script>
 
 		<YandexMetrika id="62071573" />
