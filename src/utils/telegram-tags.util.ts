@@ -14,7 +14,15 @@ export function extractTelegramTagsFromMarkdown(rawMarkdown: string): string[] {
 
   try {
     const tree = markdownParser.parse(bodyWithoutFrontmatter);
-    plainText = toString(tree);
+    type MdastNode = Parameters<typeof toString>[0];
+    const children = Array.isArray((tree as { children?: unknown }).children)
+      ? (tree as { children: MdastNode[] }).children
+      : [tree as MdastNode];
+
+    plainText = children
+      .map((node) => toString(node))
+      .filter((chunk) => chunk.trim().length > 0)
+      .join('\n\n');
   } catch {
     // Keep raw body as fallback if markdown parsing fails.
   }
