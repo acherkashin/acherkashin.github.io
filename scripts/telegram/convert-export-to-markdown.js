@@ -1,10 +1,16 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import {
+  buildArchiveExcerpt,
+  ensureArchiveImage,
+  extractArchiveTags,
+  getPreviewImageSrc,
+  IMAGE_EXTENSIONS,
+  VIDEO_EXTENSIONS,
+} from "./archive-metadata.js";
 
 const DEFAULT_INPUT_ROOT = path.resolve(process.cwd(), ".telegram-export");
 const MARKDOWN_DIRNAME = "markdown";
-const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"]);
-const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".webm", ".m4v"]);
 const MEDIA_LIMIT = 10;
 const MARKDOWN_ESCAPE_RE = /[\\`*_[\]()~|]/g;
 const CUSTOM_REACTION_PREFIX = "custom:";
@@ -427,7 +433,7 @@ function collectRawBody(group) {
   return dedupeAdjacent(chunks).join("\n\n");
 }
 
-function buildFrontmatter(group, payloadMeta, mediaLinks, customReactionEmojiMap) {
+async function buildFrontmatter(group, payloadMeta, mediaLinks, customReactionEmojiMap, sourceDir) {
   const ids = group
     .map((post) => Number(post.id))
     .filter((id) => Number.isFinite(id))
@@ -436,6 +442,10 @@ function buildFrontmatter(group, payloadMeta, mediaLinks, customReactionEmojiMap
   const body = collectBody(group);
   const rawBody = collectRawBody(group);
   const title = firstLine(rawBody) || `Post ${canonicalId}`;
+  const archiveImage = await ensureArchiveImage({
+    mediaUrl: getPreviewImageSrc(mediaLinks),
+    mediaDir: path.join(sourceDir, "media"),
+  });
   return {
     canonicalId,
     body,
@@ -453,6 +463,9 @@ function buildFrontmatter(group, payloadMeta, mediaLinks, customReactionEmojiMap
       comments: computeMaxNumeric(group, "comments"),
       reactions: aggregateReactions(group, customReactionEmojiMap),
       media: mediaLinks,
+      archiveExcerpt: buildArchiveExcerpt(body, 250) || title,
+      archiveTags: extractArchiveTags(rawBody),
+      ...(archiveImage ? { archiveImage } : {}),
     },
   };
 }
@@ -493,11 +506,12 @@ async function main() {
   for (const group of groupedPosts) {
     const sortedGroup = group.slice().sort(comparePost);
     const mediaLinks = await collectMediaLinks(sortedGroup, sourceDir);
-    const { canonicalId, body, data } = buildFrontmatter(
+    const { canonicalId, body, data } = await buildFrontmatter(
       sortedGroup,
       payload.meta,
       mediaLinks,
       customReactionEmojiMap,
+      sourceDir,
     );
 
     if (!body.trim() && mediaLinks.length === 0) {

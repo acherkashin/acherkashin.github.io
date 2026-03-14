@@ -6,6 +6,7 @@ import TelegramMediaGallery from '@/components/TelegramMediaGallery.astro';
 import TelegramReactions from '@/components/TelegramReactions.astro';
 import TelegramImageLightbox from '@/components/TelegramImageLightbox.astro';
 import ShareButton from '@/components/ShareButton.astro';
+import SvgIcon from '@/components/SvgIcon.astro';
 import Tags from '@/components/Tags.astro';
 import BackToListButton from '@/components/BackToListButton.astro';
 import { formatDate } from '@/utils/data.util';
@@ -16,7 +17,9 @@ const { frontmatter, rawContent, compiledContent } = Astro.props;
 const formattedDate = formatDate(frontmatter.publishDate);
 const formattedEditDate = frontmatter.updatedDate ? formatDate(frontmatter.updatedDate) : null;
 const rawPostContent = typeof rawContent === 'function' ? rawContent() : '';
-const postTags = extractTelegramTagsFromMarkdown(rawPostContent);
+const postTags = Array.isArray(frontmatter.archiveTags)
+  ? frontmatter.archiveTags.filter((tag: unknown): tag is string => typeof tag === 'string')
+  : extractTelegramTagsFromMarkdown(rawPostContent);
 const compiledPostContent = typeof compiledContent === 'function' ? await compiledContent() : '';
 const channelSlug = typeof frontmatter.channel === 'string'
   ? frontmatter.channel.replace(/^@/, '').trim()
@@ -70,7 +73,6 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
         <div class="mb-4">
           <BackToListButton href="/posts" label="← Все посты" />
         </div>
-        <!-- Header -->
         <div class="mb-4">
           <div class="flex items-start justify-between gap-3">
             <div>
@@ -99,18 +101,13 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
               <div class="ml-auto flex items-center justify-end gap-3 text-xs text-stone-600 dark:text-stone-400">
                 {hasViews && (
                   <span class="flex items-center gap-1">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
+                    <SvgIcon name="eye" className="h-3.5 w-3.5" />
                     <span>{viewsCount.toLocaleString('ru-RU')}</span>
                   </span>
                 )}
                 {hasComments && (
                   <span class="flex items-center gap-1">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5m-9 7 3.674-3.674A1 1 0 018.38 17H19a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 001 1.732V21z" />
-                    </svg>
+                    <SvgIcon name="comment" className="h-3.5 w-3.5" />
                     <span>{commentsCount.toLocaleString('ru-RU')}</span>
                   </span>
                 )}
@@ -123,10 +120,7 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
                     title="Открыть пост в Telegram"
                     class="inline-flex items-center text-orange-700 hover:underline dark:text-orange-500"
                   >
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 2 11 13" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 2 15 22 11 13 2 9 22 2z" />
-                    </svg>
+                    <SvgIcon name="telegram" className="h-3.5 w-3.5" />
                   </a>
                 )}
               </div>
@@ -139,7 +133,6 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
           )}
         </div>
 
-        <!-- Media Gallery -->
         {frontmatter.media && frontmatter.media.length > 0 && (
           <div class="mb-6">
             <TelegramMediaGallery 
@@ -147,18 +140,15 @@ const cleanedPostContent = removeHashtagOnlyParagraphs(compiledPostContent);
               alt={frontmatter.title}
               mode="grid"
             />
-            <!-- To switch to carousel mode, change mode="grid" to mode="carousel" above -->
           </div>
         )}
 
-        <!-- Post Content -->
         <PostContent>
           <div class="telegram-content">
             {cleanedPostContent ? <Fragment set:html={cleanedPostContent} /> : <slot />}
           </div>
         </PostContent>
 
-        <!-- Reactions and Share -->
         <Section>
           <div class="flex items-center justify-end gap-3 border-t border-stone-300 pt-4 dark:border-stone-700">
             {hasReactions && (

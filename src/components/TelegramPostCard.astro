@@ -4,21 +4,44 @@ import { buildTextPreview } from '@/utils/markdown-text.util';
 import { extractTelegramTagsFromMarkdown } from '@/utils/telegram-tags.util';
 import TelegramReactions from './TelegramReactions.astro';
 import Tags from './Tags.astro';
+import SvgIcon from './SvgIcon.astro';
 
 interface Props {
   post: any;
+  index?: number;
 }
 
-const { post } = Astro.props;
+const { post, index = Number.POSITIVE_INFINITY } = Astro.props;
 const rawPostContent = typeof post.rawContent === 'function' ? post.rawContent() : '';
-const textPreview = buildTextPreview(rawPostContent, 250) || post.frontmatter.title || '';
-const postTags = extractTelegramTagsFromMarkdown(rawPostContent);
+const textPreview =
+  (typeof post.frontmatter.archiveExcerpt === 'string' && post.frontmatter.archiveExcerpt.trim()) ||
+  buildTextPreview(rawPostContent, 250) ||
+  post.frontmatter.title ||
+  '';
+const postTags = Array.isArray(post.frontmatter.archiveTags)
+  ? post.frontmatter.archiveTags.filter((tag: unknown): tag is string => typeof tag === 'string')
+  : extractTelegramTagsFromMarkdown(rawPostContent);
 
 const mediaList: string[] = Array.isArray(post.frontmatter.media) ? post.frontmatter.media : [];
 const mediaCount = mediaList.length;
 const isVideoMedia = (src: string) => /\.(mp4|mov|webm|m4v|ogg)(?:[?#].*)?$/i.test(src);
-const previewImage = mediaList.find((src) => !isVideoMedia(src));
+const archiveImage =
+  post.frontmatter.archiveImage &&
+  typeof post.frontmatter.archiveImage === 'object' &&
+  typeof post.frontmatter.archiveImage.src === 'string' &&
+  Number.isFinite(Number(post.frontmatter.archiveImage.width)) &&
+  Number.isFinite(Number(post.frontmatter.archiveImage.height))
+    ? {
+        src: String(post.frontmatter.archiveImage.src),
+        width: Number(post.frontmatter.archiveImage.width),
+        height: Number(post.frontmatter.archiveImage.height),
+      }
+    : null;
+const previewImage = archiveImage?.src ?? mediaList.find((src) => !isVideoMedia(src));
 const hasPreviewImage = Boolean(previewImage);
+const previewImageWidth = archiveImage?.width;
+const previewImageHeight = archiveImage?.height;
+const shouldPrioritizeImage = hasPreviewImage && index < 2;
 const hasViews = Boolean(post.frontmatter.views);
 const viewsCount = Number(post.frontmatter.views);
 const commentsCount = Number(post.frontmatter.comments);
@@ -37,14 +60,17 @@ const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count 
     <div
       class="flex h-full flex-col rounded-[1rem] bg-stone-300 text-gray-900 opacity-90 dark:bg-stone-800 dark:text-white"
     >
-      <!-- Media Preview (only if an image preview is available) -->
       {hasPreviewImage && previewImage && (
         <div class="relative overflow-hidden rounded-t-[1rem]">
           <img
             src={previewImage}
             alt="Post preview"
             class="h-48 w-full object-cover transition-transform group-hover:scale-105"
-            loading="lazy"
+            loading={shouldPrioritizeImage ? 'eager' : 'lazy'}
+            fetchpriority={index === 0 ? 'high' : undefined}
+            decoding="async"
+            width={previewImageWidth}
+            height={previewImageHeight}
           />
           {mediaCount > 1 && (
             <div class="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
@@ -54,29 +80,23 @@ const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count 
         </div>
       )}
 
-      <!-- Content -->
       <div class="flex flex-1 flex-col p-4">
         <div class="flex-1">
           <div class="mb-3 flex justify-between text-xs text-stone-600 dark:text-stone-400">
             <p>{formatDate(post.frontmatter.publishDate)}</p>
             {(hasViews || hasComments) && (
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-3">
                 {hasViews && (
-                  <p class="flex items-center gap-1">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
+                  <span class="flex items-center gap-1">
+                    <SvgIcon name="eye" className="h-3.5 w-3.5" />
                     {viewsCount.toLocaleString('ru-RU')}
-                  </p>
+                  </span>
                 )}
                 {hasComments && (
-                  <p class="flex items-center gap-1">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5m-9 7 3.674-3.674A1 1 0 018.38 17H19a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 001 1.732V21z" />
-                    </svg>
+                  <span class="flex items-center gap-1">
+                    <SvgIcon name="comment" className="h-3.5 w-3.5" />
                     {commentsCount.toLocaleString('ru-RU')}
-                  </p>
+                  </span>
                 )}
               </div>
             )}
@@ -91,10 +111,9 @@ const hasReactions = reactions.length > 0 && reactions.some((r: any) => r.count 
           <p class="line-clamp-6 whitespace-pre-wrap text-sm leading-relaxed">{textPreview}</p>
         </div>
 
-        <!-- Reactions Footer -->
         {hasReactions && (
           <div class="mt-4 flex justify-end">
-            <TelegramReactions 
+            <TelegramReactions
               reactions={reactions}
               className="text-xs"
             />

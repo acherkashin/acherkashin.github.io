@@ -20,8 +20,11 @@ const articleTags = articlePosts.flatMap((post) =>
 );
 
 const telegramTags = telegramPosts.flatMap((post) => {
-	const rawContent = typeof post.rawContent === 'function' ? post.rawContent() : '';
-	return extractTelegramTagsFromMarkdown(rawContent);
+	const frontmatter = post.frontmatter as unknown as Record<string, unknown>;
+	const archiveTags = frontmatter.archiveTags;
+	return Array.isArray(archiveTags)
+		? archiveTags.filter((tag: unknown): tag is string => typeof tag === 'string')
+		: extractTelegramTagsFromMarkdown(typeof post.rawContent === 'function' ? post.rawContent() : '');
 });
 
 const allTags: Set<string> = new Set([...articleTags, ...telegramTags]);

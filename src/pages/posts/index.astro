@@ -7,12 +7,26 @@ import Heading from '@/components/Heading.astro';
 
 const { title } = AppConfig;
 const { description } = AppConfig;
+const VIDEO_MEDIA_RE = /\.(mp4|mov|webm|m4v|ogg)(?:[?#].*)?$/i;
 
 const allPosts = await Astro.glob('./*.md');
 allPosts.sort((a, b) => {
   const dateA = new Date(a.frontmatter.publishDate);
   const dateB = new Date(b.frontmatter.publishDate);
   return dateB.getTime() - dateA.getTime();
+});
+
+let imageIndex = 0;
+const archivePosts = allPosts.map((post: any) => {
+  const mediaList = Array.isArray(post.frontmatter.media) ? post.frontmatter.media : [];
+  const hasArchiveImage =
+    typeof post.frontmatter?.archiveImage?.src === 'string' ||
+    mediaList.some((src: string) => !VIDEO_MEDIA_RE.test(src));
+
+  return {
+    post,
+    imageIndex: hasArchiveImage ? imageIndex++ : Number.POSITIVE_INFINITY,
+  };
 });
 ---
 
@@ -22,10 +36,8 @@ allPosts.sort((a, b) => {
   </Section>
   <Section>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {allPosts.map((post: any) => (
-        <div class="h-full">
-          <TelegramPostCard post={post} />
-        </div>
+      {archivePosts.map(({ post, imageIndex }: any) => (
+        <TelegramPostCard post={post} index={imageIndex} />
       ))}
     </div>
   </Section>

@@ -1,0 +1,19 @@
+---
+interface Props {
+  name: 'eye' | 'comment' | 'share' | 'telegram';
+  className?: string;
+}
+
+const { name, className = '' } = Astro.props;
+---
+
+<svg
+  class={className}
+  fill="none"
+  viewBox="0 0 24 24"
+  stroke="currentColor"
+  aria-hidden="true"
+  focusable="false"
+>
+  <use href={`#icon-${name}`}></use>
+</svg>

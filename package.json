@@ -13,6 +13,7 @@
 		"telegram:export:all": "node scripts/telegram/export-channel-posts.js --all --output .telegram-export",
 		"telegram:export:week": "node scripts/telegram/export-channel-posts.js --days 30 --output .telegram-export",
 		"telegram:convert": "node scripts/telegram/convert-export-to-markdown.js --input .telegram-export",
+		"telegram:archive:backfill": "node scripts/telegram/backfill-archive-metadata.js",
 		"telegram:sync:bootstrap": "node scripts/telegram/sync-to-astro.js --mode bootstrap",
 		"telegram:sync:week": "node scripts/telegram/sync-to-astro.js --mode week --days 30",
 		"telegram:pipeline:bootstrap": "npm run telegram:export:all && npm run telegram:convert && npm run telegram:sync:bootstrap",
@@ -36,6 +37,7 @@
 		"react-dom": "^18.2.0",
 		"reading-time": "^1.5.0",
 		"rehype-pretty-code": "^0.13.0",
+		"sharp": "^0.34.5",
 		"tailwindcss": "^3.4.0",
 		"typescript": "^5.3.3"
 	},
