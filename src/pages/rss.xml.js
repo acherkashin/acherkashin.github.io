@@ -85,6 +85,7 @@ function resolveDescription({ frontmatter, previewText, fallbackTitle }) {
   return firstNonEmpty(
     frontmatter?.description,
     frontmatter?.excerpt,
+    frontmatter?.archiveExcerpt,
     previewText,
     fallbackTitle
   );

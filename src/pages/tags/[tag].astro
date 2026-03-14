@@ -42,8 +42,11 @@ export async function getStaticPaths(): Promise<any> {
 	}
 
 	for (const post of telegramPosts) {
-		const rawContent = typeof post.rawContent === 'function' ? post.rawContent() : '';
-		const tags = extractTelegramTagsFromMarkdown(rawContent);
+		const frontmatter = post.frontmatter as unknown as Record<string, unknown>;
+		const archiveTags = frontmatter.archiveTags;
+		const tags = Array.isArray(archiveTags)
+			? archiveTags.filter((rawTag: unknown): rawTag is string => typeof rawTag === 'string')
+			: extractTelegramTagsFromMarkdown(typeof post.rawContent === 'function' ? post.rawContent() : '');
 		for (const tag of tags) {
 			ensureTagEntry(tag).telegram.push(post);
 		}
@@ -67,6 +70,7 @@ const { tag: rawTag = '' } = Astro.params as { tag?: string };
 const tag = rawTag.toLowerCase();
 const title = AppConfig.title;
 const description = AppConfig.description;
+const VIDEO_MEDIA_RE = /\.(mp4|mov|webm|m4v|ogg)(?:[?#].*)?$/i;
 
 const { articles, telegramPosts } = Astro.props as Props;
 const taggedItems = [
@@ -85,6 +89,23 @@ const taggedItems = [
 	const bDate = new Date(b.publishDate || '').getTime();
 	return bDate - aDate;
 });
+
+let telegramImageIndex = 0;
+const taggedItemsWithImagePriority = taggedItems.map((item) => {
+	if (item.type !== 'telegram') {
+		return { ...item, imageIndex: Number.POSITIVE_INFINITY };
+	}
+
+	const mediaList = Array.isArray(item.post.frontmatter.media) ? item.post.frontmatter.media : [];
+	const hasArchiveImage =
+		typeof item.post.frontmatter?.archiveImage?.src === 'string' ||
+		mediaList.some((src: string) => !VIDEO_MEDIA_RE.test(src));
+
+	return {
+		...item,
+		imageIndex: hasArchiveImage ? telegramImageIndex++ : Number.POSITIVE_INFINITY
+	};
+});
 ---
 
 <Base head={{ title, description }}>
@@ -93,9 +114,9 @@ const taggedItems = [
 	</Section>
 	<Section>
 		{
-			taggedItems.map((item) => (
+			taggedItemsWithImagePriority.map((item) => (
 				<div class="mb-4 basis-1 last:mb-0">
-					{item.type === 'article' ? <Card post={item.post} /> : <TelegramPostCard post={item.post} />}
+					{item.type === 'article' ? <Card post={item.post} /> : <TelegramPostCard post={item.post} index={item.imageIndex} />}
 				</div>
 			))
 		}

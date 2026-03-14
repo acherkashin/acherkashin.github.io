@@ -1,6 +1,7 @@
 ---
 import Footer from '@/components/Footer.astro';
 import Navbar from '@/components/Navbar.astro';
+import SvgSpriteDefs from '@/components/SvgSpriteDefs.astro';
 import { AppConfig } from '@/utils/AppConfig';
 import {
 	NEW_YEAR_END_DAY,
@@ -101,10 +102,11 @@ const {
 	<body
 		class="flex min-h-screen flex-col bg-stone-100 font-serif text-gray-950 dark:bg-stone-900 dark:text-white"
 	>
+		<SvgSpriteDefs />
 		<Navbar />
-		<div class="flex-1">
+		<main class="flex-1">
 			<slot />
-		</div>
+		</main>
 
 		<Footer />
 		<style is:global>
