@@ -20,5 +20,6 @@ pnpm-debug.log*
 
 # astro
 .astro
+.playwright-cli
 
 .telegram-export/
