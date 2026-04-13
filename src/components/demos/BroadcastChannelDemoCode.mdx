@@ -1,0 +1,31 @@
+```js
+// Общий канал для всех открытых вкладок
+const channel = new BroadcastChannel('broadcast-counter');
+
+button.addEventListener('click', () => {
+  counter += 1;
+  lastUpdatedBy = tabLabel;
+  // Сразу обновляем интерфейс в текущей вкладке
+  render();
+
+  channel.postMessage({
+    type: 'counter:changed',
+    counter,
+    tabId,
+    tabLabel
+  });
+});
+
+channel.onmessage = (event) => {
+  if (event.data.type !== 'counter:changed') return;
+
+  counter = event.data.counter;
+  lastUpdatedBy = event.data.tabLabel;
+  // После нового состояния обновляем UI
+  render();
+};
+
+window.addEventListener('beforeunload', () => {
+  channel.close();
+});
+```

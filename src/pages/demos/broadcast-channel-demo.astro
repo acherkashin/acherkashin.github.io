@@ -1,0 +1,208 @@
+---
+import Demo from '@/layouts/Demo.astro';
+import RichContent from '@/components/RichContent.astro';
+import BroadcastChannelDemoCode from '@/components/demos/BroadcastChannelDemoCode.mdx';
+---
+
+<Demo
+	head={{
+		title: 'BroadcastChannel Demo',
+		description: 'Простой пример синхронизации состояния между несколькими вкладками через BroadcastChannel'
+	}}
+>
+	<div class="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.22),transparent_28%),radial-gradient(circle_at_right_center,rgba(249,115,22,0.16),transparent_24%),linear-gradient(180deg,#fcfaf6_0%,#f7f0e6_100%)] font-sans text-gray-900">
+		<div class="mx-auto grid max-w-[1440px] gap-4 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(520px,640px)] xl:grid-cols-[minmax(0,1fr)_minmax(600px,720px)]">
+			<section
+				class="rounded-[1.75rem] border border-orange-950/10 bg-white/70 p-6 shadow-[0_24px_70px_rgba(120,53,15,0.08)] backdrop-blur lg:p-7"
+				aria-labelledby="broadcast-channel-title"
+			>
+				<div class="inline-flex items-center gap-2 rounded-full bg-orange-500/10 px-3 py-2 text-xs font-bold uppercase tracking-[0.04em] text-orange-800">
+					BroadcastChannel
+				</div>
+				<h1
+					id="broadcast-channel-title"
+					class="mt-4 max-w-[11ch] text-4xl font-bold leading-none tracking-[-0.04em] sm:text-5xl lg:text-[3.7rem]"
+				>
+					Откройте две вкладки и нажмите +1
+				</h1>
+				<p class="mt-3 max-w-2xl text-base leading-7 text-gray-600">
+					Счётчик и подпись обновятся во всех уже открытых вкладках без перезагрузки страницы.
+				</p>
+
+				<div class="mt-6 rounded-3xl border border-orange-400/10 bg-orange-50/70 p-5 sm:p-6">
+					<div class="flex flex-wrap items-center justify-between gap-3">
+						<div
+							class="inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-2 text-sm font-semibold text-orange-900"
+							id="tabBadge"
+						>
+							Вкладка ...
+						</div>
+						<div
+							class="inline-flex items-center gap-2 rounded-full bg-stone-200/90 px-3 py-2 text-sm font-semibold text-gray-700"
+						>
+							<span class="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_0_6px_rgba(34,197,94,0.12)]"></span>
+							Синхронизация включена
+						</div>
+					</div>
+
+					<div class="mt-5 rounded-[1.4rem] border border-orange-400/15 bg-gradient-to-br from-orange-50 to-amber-100/80 p-5">
+						<p class="text-[0.85rem] font-bold uppercase tracking-[0.08em] text-orange-800">
+							Общий счётчик
+						</p>
+						<p
+							id="counterValue"
+							class="mt-3 text-[4.6rem] font-bold leading-none tracking-[-0.08em] text-gray-900 sm:text-[8rem]"
+						>
+							0
+						</p>
+						<p class="mt-4 text-base text-gray-600">
+							Последнее изменение:
+							<strong id="lastUpdatedValue" class="font-semibold text-gray-900">
+								ещё не было
+							</strong>
+						</p>
+					</div>
+
+					<button
+						class="mt-5 inline-flex min-h-[76px] w-full items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-orange-600 to-orange-700 px-6 py-5 text-[1.5rem] font-bold tracking-[-0.03em] text-white shadow-[0_20px_32px_rgba(194,65,12,0.2)] transition hover:-translate-y-px hover:shadow-[0_24px_36px_rgba(194,65,12,0.24)] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none"
+						id="incrementButton"
+						type="button"
+					>
+						+1
+					</button>
+					<p class="mt-3 min-h-6 text-sm text-gray-600" id="supportNote"></p>
+				</div>
+			</section>
+
+			<aside
+				class="overflow-hidden rounded-[1.75rem] border border-white/10 bg-gradient-to-b from-[#1c2128] to-[#13171c] text-white shadow-[0_24px_70px_rgba(15,23,42,0.24)] lg:sticky lg:top-4"
+				aria-labelledby="code-title"
+			>
+				<div class="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
+					<h2
+						class="text-xs font-bold uppercase tracking-[0.08em] text-slate-400"
+						id="code-title"
+					>
+						Пример кода
+					</h2>
+					<div class="rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white">
+						JavaScript
+					</div>
+				</div>
+				<div class="px-5 pb-5 pt-4">
+					<RichContent
+						class="mt-0 max-w-none text-sm leading-7 text-white prose-invert [&_[data-rehype-pretty-code-figure]]:my-0 [&_[data-rehype-pretty-code-figure]]:overflow-hidden [&_pre]:my-0 [&_pre]:overflow-x-auto"
+					>
+						<BroadcastChannelDemoCode />
+					</RichContent>
+				</div>
+			</aside>
+		</div>
+	</div>
+
+	<script is:inline>
+		const counterValueElement = document.getElementById('counterValue');
+		const lastUpdatedValueElement = document.getElementById('lastUpdatedValue');
+		const tabBadgeElement = document.getElementById('tabBadge');
+		const incrementButtonElement = document.getElementById('incrementButton');
+		const supportNoteElement = document.getElementById('supportNote');
+
+		const supportsBroadcastChannel = typeof window.BroadcastChannel !== 'undefined';
+		let counter = 0;
+		let lastUpdatedBy = 'ещё не было';
+
+		const createTabId = () => {
+			if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+				return window.crypto.randomUUID().slice(0, 8);
+			}
+
+			return Math.random().toString(36).slice(2, 10);
+		};
+
+		const createTabLabel = () => {
+			const existingLabel = sessionStorage.getItem('broadcast-demo-tab-label');
+
+			if (existingLabel) {
+				return existingLabel;
+			}
+
+			const nextNumber = Number(localStorage.getItem('broadcast-demo-tab-counter') || '0') + 1;
+			localStorage.setItem('broadcast-demo-tab-counter', String(nextNumber));
+
+			const label = `Вкладка ${nextNumber}`;
+			sessionStorage.setItem('broadcast-demo-tab-label', label);
+			return label;
+		};
+
+		const tabId = createTabId();
+		const tabLabel = createTabLabel();
+		const channel = supportsBroadcastChannel
+			? new BroadcastChannel('broadcast-channel-demo-counter')
+			: null;
+
+		const render = () => {
+			if (counterValueElement) {
+				counterValueElement.textContent = String(counter);
+			}
+
+			if (lastUpdatedValueElement) {
+				lastUpdatedValueElement.textContent = lastUpdatedBy;
+			}
+
+			if (tabBadgeElement) {
+				tabBadgeElement.textContent = tabLabel;
+			}
+		};
+
+		const increment = () => {
+			counter += 1;
+			lastUpdatedBy = tabLabel;
+			render();
+
+			channel?.postMessage({
+				type: 'counter:changed',
+				counter,
+				tabId,
+				tabLabel
+			});
+		};
+
+		render();
+
+		if (supportsBroadcastChannel) {
+			if (supportNoteElement) {
+				supportNoteElement.textContent = 'Нажмите кнопку в любой вкладке и переключитесь в соседнюю.';
+			}
+
+			if (incrementButtonElement) {
+				incrementButtonElement.addEventListener('click', increment);
+			}
+
+			channel.onmessage = (event) => {
+				console.log(event.data);
+				if (event.data?.type !== 'counter:changed') {
+					return;
+				}
+
+				counter = event.data.counter;
+				lastUpdatedBy = event.data.tabLabel;
+				render();
+			};
+
+			window.addEventListener('beforeunload', () => {
+				channel.close();
+			});
+		} else {
+			if (supportNoteElement) {
+				supportNoteElement.textContent =
+					'В этом браузере BroadcastChannel не поддерживается.';
+				supportNoteElement.classList.remove('text-gray-600');
+				supportNoteElement.classList.add('text-red-700');
+			}
+
+			if (incrementButtonElement) {
+				incrementButtonElement.disabled = true;
+			}
+		}
+	</script>
+</Demo>

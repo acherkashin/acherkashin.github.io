@@ -7,6 +7,12 @@ export interface PlaygroundItem {
 
 export const playgrounds: PlaygroundItem[] = [
 	{
+		slug: 'broadcast-channel-demo',
+		title: 'BroadcastChannel Demo',
+		description: 'Простой счётчик, который синхронизируется между несколькими вкладками',
+		cover: null
+	},
+	{
 		slug: 'size-adjust-playground',
 		title: 'CSS size-adjust Playground',
 		description: 'Interactive playground for @font-face size-adjust with Inter and Nunito',
