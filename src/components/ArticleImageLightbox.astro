@@ -1,0 +1,135 @@
+<div
+	id="article-image-lightbox"
+	class="fixed inset-0 z-50 hidden items-center justify-center bg-black/95 p-4 sm:p-6"
+	role="dialog"
+	aria-modal="true"
+	aria-label="Просмотр изображения"
+>
+	<button
+		id="article-image-lightbox-close"
+		type="button"
+		class="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+		aria-label="Закрыть изображение"
+	>
+		<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+		</svg>
+	</button>
+
+	<img
+		id="article-image-lightbox-image"
+		src=""
+		alt=""
+		class="max-h-full max-w-full object-contain"
+	/>
+</div>
+
+<script>
+	class ArticleImageLightbox {
+		private lightbox: HTMLElement;
+		private lightboxImage: HTMLImageElement;
+		private closeButton: HTMLButtonElement;
+		private activeTrigger: HTMLImageElement | null = null;
+		private previousBodyOverflow = '';
+
+		constructor() {
+			this.lightbox = document.getElementById('article-image-lightbox')!;
+			this.lightboxImage = document.getElementById(
+				'article-image-lightbox-image'
+			) as HTMLImageElement;
+			this.closeButton = document.getElementById(
+				'article-image-lightbox-close'
+			) as HTMLButtonElement;
+
+			this.setupEventListeners();
+		}
+
+		private setupEventListeners() {
+			document.addEventListener('click', (event) => {
+				const target = event.target;
+				if (!(target instanceof HTMLElement)) {
+					return;
+				}
+
+				const trigger = target.closest('[data-article-image-trigger]');
+				if (trigger instanceof HTMLImageElement) {
+					this.open(trigger);
+				}
+			});
+
+			document.addEventListener('keydown', (event) => {
+				if (event.key === 'Escape' && this.isOpen()) {
+					this.close();
+					return;
+				}
+
+				if (event.key !== 'Enter' && event.key !== ' ') {
+					return;
+				}
+
+				const target = event.target;
+				if (!(target instanceof HTMLElement)) {
+					return;
+				}
+
+				const trigger = target.closest('[data-article-image-trigger]');
+				if (trigger instanceof HTMLImageElement) {
+					event.preventDefault();
+					this.open(trigger);
+				}
+			});
+
+			this.closeButton.addEventListener('click', () => this.close());
+
+			this.lightbox.addEventListener('click', (event) => {
+				if (event.target === this.lightbox) {
+					this.close();
+				}
+			});
+		}
+
+		private isOpen() {
+			return this.lightbox.classList.contains('flex');
+		}
+
+		private open(trigger: HTMLImageElement) {
+			const imageSource = trigger.currentSrc || trigger.src;
+			if (!imageSource) {
+				return;
+			}
+
+			this.activeTrigger = trigger;
+			this.previousBodyOverflow = document.body.style.overflow;
+			document.body.style.overflow = 'hidden';
+
+			this.lightboxImage.src = imageSource;
+			this.lightboxImage.alt = trigger.alt;
+			this.lightbox.classList.remove('hidden');
+			this.lightbox.classList.add('flex');
+			this.closeButton.focus();
+		}
+
+		private close() {
+			if (!this.isOpen()) {
+				return;
+			}
+
+			this.lightbox.classList.remove('flex');
+			this.lightbox.classList.add('hidden');
+			this.lightboxImage.src = '';
+			this.lightboxImage.alt = '';
+			document.body.style.overflow = this.previousBodyOverflow;
+			this.activeTrigger?.focus();
+			this.activeTrigger = null;
+		}
+	}
+
+	const articleImageLightboxWindow = window as Window & {
+		__articleImageLightboxInitialized?: boolean;
+	};
+
+	if (!articleImageLightboxWindow.__articleImageLightboxInitialized) {
+		articleImageLightboxWindow.__articleImageLightboxInitialized = true;
+		new ArticleImageLightbox();
+	}
+</script>
