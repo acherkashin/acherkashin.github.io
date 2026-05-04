@@ -1,0 +1,897 @@
+---
+import Demo from '@/layouts/Demo.astro';
+---
+
+<Demo
+	head={{
+		title: 'File System Access Mini-IDE',
+		description: 'Мини-редактор локальной папки через File System Access API'
+	}}
+>
+	<div class="h-screen overflow-hidden bg-[linear-gradient(135deg,#f8fafc_0%,#eef7f3_42%,#fff7ed_100%)] font-sans text-slate-950">
+		<div class="mx-auto flex h-full min-h-0 max-w-[1480px] flex-col gap-3 px-3 py-3 sm:px-4 lg:px-5">
+			<header class="shrink-0">
+				<section
+					class="rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-[0_20px_70px_rgba(15,23,42,0.08)] backdrop-blur sm:p-5"
+					aria-labelledby="file-system-title"
+				>
+					<div class="flex flex-wrap items-center gap-2">
+						<span class="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold uppercase text-emerald-800">
+							File System Access API
+						</span>
+						<span
+							id="supportBadge"
+							class="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold uppercase text-slate-700"
+						>
+							Проверяем поддержку
+						</span>
+					</div>
+
+					<h1
+						id="file-system-title"
+						class="mt-3 max-w-4xl text-3xl font-bold leading-tight text-slate-950 sm:text-4xl"
+					>
+						Мини-IDE, которая работает с локальной папкой из браузера
+					</h1>
+					<p class="mt-3 max-w-3xl text-base leading-7 text-slate-600">
+						Выберите папку, откройте текстовый файл, измените его и сохраните обратно.
+						Сайт видит только выбранную директорию, а запись требует отдельного разрешения.
+					</p>
+				</section>
+			</header>
+
+			<main class="grid min-h-0 flex-1 gap-3 lg:grid-cols-[340px_minmax(0,1fr)_340px]">
+				<section class="flex min-h-0 flex-col rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.07)]">
+					<div class="border-b border-slate-200 p-4">
+						<div class="flex flex-wrap gap-2">
+							<button
+								id="openDirectoryButton"
+								type="button"
+								class="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 sm:flex-none"
+							>
+								Открыть папку
+							</button>
+						</div>
+						<p id="directoryLabel" class="mt-3 min-h-5 text-sm text-slate-500">
+							Папка не выбрана
+						</p>
+					</div>
+
+					<div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+						<h2 class="text-sm font-bold text-slate-900">Файлы</h2>
+						<span id="fileCountLabel" class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+							0
+						</span>
+					</div>
+
+					<div id="fileTree" class="min-h-0 flex-1 overflow-auto p-2">
+						<div class="rounded-xl border border-dashed border-slate-300 p-4 text-sm leading-6 text-slate-500">
+							После выбора папки здесь появится дерево файлов. Тексты можно редактировать, изображения смотреть, остальные файлы останутся недоступными.
+						</div>
+					</div>
+				</section>
+
+				<section class="flex min-h-0 flex-col rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_18px_60px_rgba(15,23,42,0.07)]">
+					<div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
+						<div class="min-w-0">
+							<p class="text-xs font-bold uppercase text-slate-500">Текущий файл</p>
+							<h2 id="activeFileName" class="mt-1 truncate text-lg font-bold text-slate-950">
+								Ничего не открыто
+							</h2>
+						</div>
+						<div class="flex flex-wrap items-center gap-2">
+							<span id="dirtyBadge" class="hidden rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800">
+								Есть изменения
+							</span>
+							<button
+								id="saveButton"
+								type="button"
+								disabled
+								class="hidden inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
+							>
+								Сохранить
+							</button>
+						</div>
+					</div>
+
+					<div id="writeWarning" class="hidden border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+						<strong class="font-bold">Внимание:</strong> первое сохранение запросит право <code class="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-bold">readwrite</code> и перезапишет выбранный локальный файл.
+					</div>
+
+					<div id="emptyState" class="flex min-h-0 flex-1 items-center justify-center bg-slate-950 p-4">
+						<div class="max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-slate-200">
+							<p class="text-sm font-bold uppercase text-emerald-300">Готово к работе</p>
+							<h2 class="mt-3 text-2xl font-bold text-white">Выберите файл из дерева</h2>
+							<p class="mt-3 text-sm leading-6 text-slate-400">
+								Текстовые файлы откроются в редакторе, изображения — в preview, а неподдерживаемые останутся неактивными.
+							</p>
+						</div>
+					</div>
+
+					<textarea
+						id="editor"
+						class="hidden min-h-0 flex-1 resize-none overflow-auto bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-100 outline-none disabled:bg-slate-100 disabled:text-slate-500"
+						spellcheck="false"
+						disabled
+						placeholder="Откройте текстовый файл из выбранной папки."
+					></textarea>
+
+					<div id="imagePreview" class="hidden min-h-0 flex-1 overflow-auto bg-slate-950 p-4">
+						<div class="flex min-h-full items-center justify-center rounded-xl border border-white/10 bg-[linear-gradient(45deg,rgba(255,255,255,0.05)_25%,transparent_25%,transparent_75%,rgba(255,255,255,0.05)_75%),linear-gradient(45deg,rgba(255,255,255,0.05)_25%,transparent_25%,transparent_75%,rgba(255,255,255,0.05)_75%)] bg-[length:24px_24px] bg-[position:0_0,12px_12px] p-4">
+							<img
+								id="previewImage"
+								alt=""
+								class="max-h-[68vh] max-w-full rounded-lg object-contain shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
+							/>
+						</div>
+					</div>
+
+					<div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-sm text-slate-600">
+						<span id="statusText">Готово</span>
+						<span id="fileMetaText">Только выбранные пользователем файлы</span>
+					</div>
+				</section>
+
+				<aside class="flex min-h-0 flex-col gap-3 overflow-hidden">
+					<section class="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.07)]">
+						<div class="flex items-center justify-between gap-3">
+							<h2 class="text-sm font-bold text-slate-950">Диагностика</h2>
+							<span id="permissionBadge" class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+								unknown
+							</span>
+						</div>
+						<p id="permissionText" class="mt-3 text-sm leading-6 text-slate-600">
+							Откройте файл из папки, чтобы проверить право на запись.
+						</p>
+						<button
+							id="requestPermissionButton"
+							type="button"
+							disabled
+							class="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+						>
+							Запросить readwrite
+						</button>
+
+						<div class="mt-5 border-t border-slate-200 pt-4">
+							<h3 class="text-xs font-bold uppercase text-slate-500">Поддержка браузера</h3>
+							<ul id="supportList" class="mt-3 space-y-2 text-sm leading-6 text-slate-600"></ul>
+						</div>
+
+						<div class="mt-5 border-t border-slate-200 pt-4">
+							<h3 class="text-xs font-bold uppercase text-slate-500">Справка</h3>
+							<div class="mt-3 flex flex-wrap gap-x-3 gap-y-2 text-sm">
+								<a class="font-semibold text-emerald-800 underline decoration-emerald-300 underline-offset-4" href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_API" rel="noreferrer" target="_blank">MDN API</a>
+								<a class="font-semibold text-emerald-800 underline decoration-emerald-300 underline-offset-4" href="https://developer.mozilla.org/en-US/docs/Web/API/Window/showOpenFilePicker" rel="noreferrer" target="_blank">Picker</a>
+								<a class="font-semibold text-emerald-800 underline decoration-emerald-300 underline-offset-4" href="https://developer.chrome.com/docs/capabilities/web-apis/file-system-access" rel="noreferrer" target="_blank">Chrome docs</a>
+							</div>
+						</div>
+					</section>
+				</aside>
+			</main>
+		</div>
+	</div>
+
+	<script is:inline>
+		const textExtensions = new Set([
+			'js',
+			'jsx',
+			'ts',
+			'tsx',
+			'd.ts',
+			'mjs',
+			'cjs',
+			'json',
+			'jsonc',
+			'html',
+			'htm',
+			'css',
+			'scss',
+			'sass',
+			'less',
+			'vue',
+			'svelte',
+			'astro',
+			'txt',
+			'md',
+			'mdx',
+			'yml',
+			'yaml',
+			'toml',
+			'xml',
+			'env',
+			'gitignore',
+			'cs',
+			'py',
+			'go'
+		]);
+		const imageExtensions = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']);
+		const maxDepth = 5;
+
+		const elements = {
+			activeFileName: document.getElementById('activeFileName'),
+			directoryLabel: document.getElementById('directoryLabel'),
+			dirtyBadge: document.getElementById('dirtyBadge'),
+			editor: document.getElementById('editor'),
+			emptyState: document.getElementById('emptyState'),
+			fileCountLabel: document.getElementById('fileCountLabel'),
+			fileMetaText: document.getElementById('fileMetaText'),
+			fileTree: document.getElementById('fileTree'),
+			imagePreview: document.getElementById('imagePreview'),
+			openDirectoryButton: document.getElementById('openDirectoryButton'),
+			permissionBadge: document.getElementById('permissionBadge'),
+			permissionText: document.getElementById('permissionText'),
+			previewImage: document.getElementById('previewImage'),
+			requestPermissionButton: document.getElementById('requestPermissionButton'),
+			saveButton: document.getElementById('saveButton'),
+			statusText: document.getElementById('statusText'),
+			supportBadge: document.getElementById('supportBadge'),
+			supportList: document.getElementById('supportList'),
+			writeWarning: document.getElementById('writeWarning')
+		};
+
+		const state = {
+			activeEntryId: null,
+			activeFileHandle: null,
+			activeFileKind: 'none',
+			activeFileName: '',
+			activeImageUrl: null,
+			activeFileText: '',
+			canWriteActiveFile: false,
+			directoryHandle: null,
+			expandedDirectoryIds: new Set(),
+			isDirty: false,
+			isReadingDirectory: false,
+			treeNodes: []
+		};
+
+		const support = {
+			createWritable: typeof FileSystemFileHandle !== 'undefined' && 'createWritable' in FileSystemFileHandle.prototype,
+			queryPermission: typeof FileSystemHandle !== 'undefined' && 'queryPermission' in FileSystemHandle.prototype,
+			requestPermission: typeof FileSystemHandle !== 'undefined' && 'requestPermission' in FileSystemHandle.prototype,
+			showDirectoryPicker: 'showDirectoryPicker' in window
+		};
+
+		const supportsPrimaryFlow =
+			support.showDirectoryPicker &&
+			support.createWritable &&
+			support.queryPermission &&
+			support.requestPermission;
+
+		const formatBytes = (bytes) => {
+			if (!Number.isFinite(bytes)) {
+				return '';
+			}
+
+			if (bytes < 1024) {
+				return `${bytes} B`;
+			}
+
+			if (bytes < 1024 * 1024) {
+				return `${(bytes / 1024).toFixed(1)} KB`;
+			}
+
+			return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+		};
+
+		const getExtension = (name) => {
+			const lowerName = name.toLowerCase();
+
+			if (lowerName.endsWith('.d.ts')) {
+				return 'd.ts';
+			}
+
+			if (lowerName === '.env' || lowerName.endsWith('.env')) {
+				return 'env';
+			}
+
+			if (lowerName === '.gitignore' || lowerName.endsWith('.gitignore')) {
+				return 'gitignore';
+			}
+
+			const parts = lowerName.split('.');
+			return parts.length > 1 ? parts.at(-1) : '';
+		};
+
+		const isTextFileName = (name) => textExtensions.has(getExtension(name));
+		const isImageFileName = (name) => imageExtensions.has(getExtension(name));
+
+		const getFileKind = (name) => {
+			if (isTextFileName(name)) {
+				return 'text';
+			}
+
+			if (isImageFileName(name)) {
+				return 'image';
+			}
+
+			return 'unsupported';
+		};
+
+		const revokeActiveImageUrl = () => {
+			if (state.activeImageUrl) {
+				URL.revokeObjectURL(state.activeImageUrl);
+				state.activeImageUrl = null;
+			}
+
+			if (elements.previewImage) {
+				elements.previewImage.removeAttribute('src');
+				elements.previewImage.alt = '';
+			}
+		};
+
+		const setStatus = (message) => {
+			if (elements.statusText) {
+				elements.statusText.textContent = message;
+			}
+		};
+
+		const setReadingDirectory = (isReading) => {
+			state.isReadingDirectory = isReading;
+
+			if (elements.openDirectoryButton) {
+				elements.openDirectoryButton.disabled = isReading || !support.showDirectoryPicker;
+				elements.openDirectoryButton.textContent = isReading ? 'Сканирую папку...' : 'Открыть папку';
+			}
+
+			updateSaveButton();
+		};
+
+		const setDirty = (isDirty) => {
+			state.isDirty = isDirty;
+			elements.dirtyBadge?.classList.toggle('hidden', !isDirty);
+			elements.writeWarning?.classList.toggle(
+				'hidden',
+				!isDirty || state.activeFileKind !== 'text'
+			);
+			updateSaveButton();
+		};
+
+		const updateSaveButton = () => {
+			if (!elements.saveButton) {
+				return;
+			}
+
+			const canShowSave = state.activeFileKind === 'text';
+			elements.saveButton.classList.toggle('hidden', !canShowSave);
+			elements.saveButton.disabled =
+				state.isReadingDirectory ||
+				!state.activeFileHandle ||
+				!state.isDirty ||
+				!canShowSave;
+		};
+
+		const setContentMode = (mode) => {
+			state.activeFileKind = mode;
+
+			elements.emptyState?.classList.toggle('hidden', mode !== 'none');
+			elements.emptyState?.classList.toggle('flex', mode === 'none');
+
+			if (elements.editor) {
+				elements.editor.classList.toggle('hidden', mode !== 'text');
+				elements.editor.disabled = mode !== 'text';
+			}
+
+			elements.imagePreview?.classList.toggle('hidden', mode !== 'image');
+
+			if (mode !== 'image') {
+				revokeActiveImageUrl();
+			}
+
+			if (mode !== 'text') {
+				setDirty(false);
+			}
+
+			updateSaveButton();
+		};
+
+		const confirmDiscardChanges = () => {
+			if (!state.isDirty || state.activeFileKind !== 'text') {
+				return true;
+			}
+
+			return window.confirm('В текущем файле есть несохранённые изменения. Потерять их и открыть другой файл?');
+		};
+
+		const treeIcons = {
+			directoryClosed:
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.8 6.5A2.5 2.5 0 0 1 6.3 4h3.3l2 2.2h6.1a2.5 2.5 0 0 1 2.5 2.5v8.8a2.5 2.5 0 0 1-2.5 2.5H6.3a2.5 2.5 0 0 1-2.5-2.5z"/></svg>',
+			directoryOpen:
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.8 7.5A2.5 2.5 0 0 1 6.3 5h3.1l2 2.1h6.3a2.5 2.5 0 0 1 2.5 2.5v.8"/><path d="M4.3 10h15.4a1.4 1.4 0 0 1 1.35 1.78l-1.8 6.4A2.5 2.5 0 0 1 16.85 20H5.95a2.5 2.5 0 0 1-2.4-3.18z"/></svg>',
+			text:
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.8h7.2L18 7.6v12.6H7z"/><path d="M14 3.8v4h4"/><path d="M9.5 12h5"/><path d="M9.5 15.5h5"/></svg>',
+			image:
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2.4"/><circle cx="9" cy="10" r="1.5"/><path d="m7 17 3.6-3.6a1.4 1.4 0 0 1 2 0L14 14.8l1.1-1.1a1.4 1.4 0 0 1 2 0L20 16.6"/></svg>',
+			unsupported:
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.8h7.2L18 7.6v12.6H7z"/><path d="M14 3.8v4h4"/><path d="m10 12 4 4"/><path d="m14 12-4 4"/></svg>'
+		};
+
+		const getTreeIcon = (entry, isExpanded) => {
+			if (entry.kind === 'directory') {
+				return isExpanded ? treeIcons.directoryOpen : treeIcons.directoryClosed;
+			}
+
+			if (entry.fileKind === 'text') {
+				return treeIcons.text;
+			}
+
+			if (entry.fileKind === 'image') {
+				return treeIcons.image;
+			}
+
+			return treeIcons.unsupported;
+		};
+
+		const renderSupport = () => {
+			const checks = [
+				['showDirectoryPicker()', support.showDirectoryPicker],
+				['FileSystemFileHandle.createWritable()', support.createWritable],
+				['queryPermission()', support.queryPermission],
+				['requestPermission()', support.requestPermission]
+			];
+
+			if (elements.supportBadge) {
+				elements.supportBadge.textContent = supportsPrimaryFlow ? 'Полная поддержка' : 'Нет полного доступа';
+				elements.supportBadge.className = supportsPrimaryFlow
+					? 'rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold uppercase text-emerald-800'
+					: 'rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold uppercase text-amber-800';
+			}
+
+			if (elements.openDirectoryButton) {
+				elements.openDirectoryButton.disabled = !support.showDirectoryPicker || state.isReadingDirectory;
+			}
+
+			if (elements.supportList) {
+				elements.supportList.replaceChildren(
+					...checks.map(([label, ok]) => {
+						const item = document.createElement('li');
+						item.className = 'flex items-start gap-2';
+
+						const marker = document.createElement('span');
+						marker.className = ok
+							? 'mt-2 h-2 w-2 shrink-0 rounded-full bg-emerald-500'
+							: 'mt-2 h-2 w-2 shrink-0 rounded-full bg-amber-500';
+
+						const text = document.createElement('span');
+						text.textContent = `${ok ? 'Есть' : 'Нет'}: ${label}`;
+
+						item.append(marker, text);
+						return item;
+					})
+				);
+			}
+
+			if (!supportsPrimaryFlow) {
+				setStatus('Полный сценарий File System Access доступен только в Chromium-браузерах.');
+			}
+		};
+
+		const updatePermissionUi = async () => {
+			if (!elements.permissionBadge || !elements.permissionText || !elements.requestPermissionButton) {
+				return;
+			}
+
+			if (state.activeFileKind === 'image') {
+				state.canWriteActiveFile = false;
+				elements.permissionBadge.textContent = 'preview';
+				elements.permissionBadge.className = 'rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600';
+				elements.permissionText.textContent =
+					'Изображение открыто только для просмотра. Для preview не нужен доступ readwrite.';
+				elements.requestPermissionButton.disabled = true;
+				updateSaveButton();
+				return;
+			}
+
+			if (!state.activeFileHandle || !support.queryPermission) {
+				state.canWriteActiveFile = false;
+				elements.permissionBadge.textContent = 'unknown';
+				elements.permissionBadge.className = 'rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600';
+				elements.permissionText.textContent = support.queryPermission
+					? 'Откройте файл из папки, чтобы проверить право на запись.'
+					: 'Браузер не поддерживает проверку прав File System Access API.';
+				elements.requestPermissionButton.disabled = true;
+				updateSaveButton();
+				return;
+			}
+
+			try {
+				const permission = await state.activeFileHandle.queryPermission({ mode: 'readwrite' });
+				state.canWriteActiveFile = permission === 'granted';
+
+				elements.permissionBadge.textContent = permission;
+				elements.permissionBadge.className =
+					permission === 'granted'
+						? 'rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800'
+						: permission === 'prompt'
+							? 'rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800'
+							: 'rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-800';
+
+				elements.permissionText.textContent =
+					permission === 'granted'
+						? 'Можно сохранять изменения в текущий файл. Другие файлы не меняются.'
+						: 'Для сохранения браузер попросит отдельное разрешение на запись в текущий файл.';
+
+				elements.requestPermissionButton.disabled = !support.requestPermission || permission === 'granted';
+			} catch (error) {
+				state.canWriteActiveFile = false;
+				elements.permissionBadge.textContent = 'error';
+				elements.permissionBadge.className = 'rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-800';
+				elements.permissionText.textContent =
+					error instanceof Error ? error.message : 'Не удалось проверить права доступа.';
+				elements.requestPermissionButton.disabled = true;
+			}
+
+			updateSaveButton();
+		};
+
+		const readDirectoryNodes = async (directoryHandle, path = '', depth = 0) => {
+			const result = [];
+
+			if (depth > maxDepth) {
+				return result;
+			}
+
+			const children = [];
+
+			for await (const [name, handle] of directoryHandle.entries()) {
+				children.push({ handle, name });
+			}
+
+			children.sort((a, b) => {
+				if (a.handle.kind !== b.handle.kind) {
+					return a.handle.kind === 'directory' ? -1 : 1;
+				}
+
+				return a.name.localeCompare(b.name, 'ru');
+			});
+
+			for (const { name, handle } of children) {
+				const entryPath = path ? `${path}/${name}` : name;
+
+				if (handle.kind === 'directory') {
+					result.push({
+						children: await readDirectoryNodes(handle, entryPath, depth + 1),
+						depth,
+						handle,
+						id: entryPath,
+						kind: 'directory',
+						name,
+						path: entryPath
+					});
+				} else {
+					const fileKind = getFileKind(name);
+
+					result.push({
+						depth,
+						fileKind,
+						handle,
+						id: entryPath,
+						kind: 'file',
+						name,
+						path: entryPath
+					});
+				}
+			}
+
+			return result;
+		};
+
+		const flattenNodes = (nodes) => {
+			const result = [];
+
+			for (const node of nodes) {
+				result.push(node);
+
+				if (node.kind === 'directory' && state.expandedDirectoryIds.has(node.id)) {
+					result.push(...flattenNodes(node.children));
+				}
+			}
+
+			return result;
+		};
+
+		const countFiles = (nodes) =>
+			nodes.reduce(
+				(count, node) =>
+					count + (node.kind === 'file' ? 1 : countFiles(node.children)),
+				0
+			);
+
+		const findNodeById = (nodes, id) => {
+			for (const node of nodes) {
+				if (node.id === id) {
+					return node;
+				}
+
+				if (node.kind === 'directory') {
+					const nestedNode = findNodeById(node.children, id);
+
+					if (nestedNode) {
+						return nestedNode;
+					}
+				}
+			}
+
+			return null;
+		};
+
+		const renderFileTree = () => {
+			if (!elements.fileTree || !elements.fileCountLabel) {
+				return;
+			}
+
+			elements.fileCountLabel.textContent = String(countFiles(state.treeNodes));
+
+			if (state.treeNodes.length === 0) {
+				const empty = document.createElement('div');
+				empty.className = 'rounded-xl border border-dashed border-slate-300 p-4 text-sm leading-6 text-slate-500';
+				empty.textContent = 'В выбранной папке нет файлов на доступной глубине.';
+				elements.fileTree.replaceChildren(empty);
+				return;
+			}
+
+			const visibleNodes = flattenNodes(state.treeNodes);
+
+			elements.fileTree.replaceChildren(
+				...visibleNodes.map((entry) => {
+					const isDirectory = entry.kind === 'directory';
+					const isExpanded = isDirectory && state.expandedDirectoryIds.has(entry.id);
+					const isSupportedFile = entry.kind === 'file' && entry.fileKind !== 'unsupported';
+					const row = document.createElement('button');
+					row.type = 'button';
+					row.dataset.entryId = entry.id;
+					row.dataset.entryKind = entry.kind;
+					row.disabled = entry.kind === 'file' && !isSupportedFile;
+					row.className = [
+						'flex min-h-9 w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition',
+						isDirectory
+							? 'font-bold text-slate-800 hover:bg-slate-100'
+							: entry.fileKind === 'text'
+								? 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-900'
+								: entry.fileKind === 'image'
+									? 'text-slate-700 hover:bg-sky-50 hover:text-sky-900'
+									: 'cursor-not-allowed text-slate-400',
+						state.activeEntryId === entry.id ? 'bg-emerald-100 text-emerald-950' : ''
+					].join(' ');
+					row.style.paddingLeft = `${8 + entry.depth * 18}px`;
+					row.setAttribute('aria-expanded', isDirectory ? String(isExpanded) : 'false');
+
+					const icon = document.createElement('span');
+					icon.className = [
+						'flex h-5 w-5 shrink-0 items-center justify-center',
+						isDirectory
+							? 'text-amber-600'
+							: entry.fileKind === 'text'
+								? 'text-emerald-700'
+								: entry.fileKind === 'image'
+									? 'text-sky-700'
+									: 'text-slate-400'
+					].join(' ');
+					icon.innerHTML = getTreeIcon(entry, isExpanded);
+					icon.setAttribute('aria-hidden', 'true');
+
+					const name = document.createElement('span');
+					name.className = 'min-w-0 flex-1 truncate';
+					name.textContent = entry.name;
+
+					row.append(icon, name);
+					return row;
+				})
+			);
+		};
+
+		const renderFileTreeLoading = () => {
+			if (!elements.fileTree || !elements.fileCountLabel) {
+				return;
+			}
+
+			elements.fileCountLabel.textContent = '...';
+
+			const loading = document.createElement('div');
+			loading.className = 'rounded-xl border border-dashed border-emerald-300 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900';
+			loading.textContent = 'Сканирую папку и собираю дерево файлов...';
+			elements.fileTree.replaceChildren(loading);
+		};
+
+		const openFileEntry = async (entry) => {
+			if (state.isReadingDirectory) {
+				return;
+			}
+
+			if (!entry || entry.kind !== 'file' || entry.fileKind === 'unsupported') {
+				return;
+			}
+
+			if (!confirmDiscardChanges()) {
+				return;
+			}
+
+			try {
+				const file = await entry.handle.getFile();
+
+				state.activeEntryId = entry.id;
+				state.activeFileHandle = entry.handle;
+				state.activeFileName = entry.path;
+
+				if (elements.activeFileName) {
+					elements.activeFileName.textContent = entry.path;
+				}
+
+				if (elements.fileMetaText) {
+					elements.fileMetaText.textContent = `${formatBytes(file.size)} · ${file.type || (entry.fileKind === 'image' ? 'image/*' : 'text/plain')}`;
+				}
+
+				if (entry.fileKind === 'image') {
+					revokeActiveImageUrl();
+					const imageUrl = URL.createObjectURL(file);
+					setContentMode('image');
+					state.activeImageUrl = imageUrl;
+
+					if (elements.previewImage) {
+						elements.previewImage.src = imageUrl;
+						elements.previewImage.alt = entry.name;
+					}
+
+					await updatePermissionUi();
+					setStatus(`Открыто изображение ${entry.path}`);
+				} else {
+					const text = await file.text();
+					state.activeFileText = text;
+
+					if (elements.editor) {
+						elements.editor.value = text;
+					}
+
+					setContentMode('text');
+					setDirty(false);
+					await updatePermissionUi();
+					setStatus(`Открыт ${entry.path}`);
+				}
+
+				renderFileTree();
+			} catch (error) {
+				setStatus(error instanceof Error ? error.message : 'Не удалось открыть файл.');
+			}
+		};
+
+		const openDirectory = async () => {
+			if (!support.showDirectoryPicker) {
+				setStatus('showDirectoryPicker() здесь не поддерживается. Откройте демо в Chromium-браузере.');
+				return;
+			}
+
+			try {
+				if (!confirmDiscardChanges()) {
+					return;
+				}
+
+				const directoryHandle = await window.showDirectoryPicker({ mode: 'read' });
+				setReadingDirectory(true);
+				setStatus(`Сканирую папку ${directoryHandle.name}...`);
+				renderFileTreeLoading();
+
+				state.directoryHandle = directoryHandle;
+				state.treeNodes = await readDirectoryNodes(directoryHandle);
+				state.expandedDirectoryIds = new Set(
+					state.treeNodes
+						.filter((node) => node.kind === 'directory')
+						.map((node) => node.id)
+				);
+				state.activeEntryId = null;
+				state.activeFileHandle = null;
+				state.activeFileKind = 'none';
+				state.activeFileName = '';
+				state.activeFileText = '';
+
+				if (elements.directoryLabel) {
+					elements.directoryLabel.textContent = `Выбрана папка: ${directoryHandle.name}`;
+				}
+
+				if (elements.activeFileName) {
+					elements.activeFileName.textContent = 'Ничего не открыто';
+				}
+
+				if (elements.editor) {
+					elements.editor.value = '';
+				}
+
+				if (elements.fileMetaText) {
+					elements.fileMetaText.textContent = 'Откройте текстовый файл или изображение из дерева';
+				}
+
+				setContentMode('none');
+				setDirty(false);
+				renderFileTree();
+				await updatePermissionUi();
+				setStatus(`Папка ${directoryHandle.name} открыта. Сайт не видит ничего за её пределами.`);
+			} catch (error) {
+				if (error instanceof DOMException && error.name === 'AbortError') {
+					setStatus('Выбор папки отменён.');
+					return;
+				}
+
+				setStatus(error instanceof Error ? error.message : 'Не удалось открыть папку.');
+			} finally {
+				setReadingDirectory(false);
+			}
+		};
+
+		const requestWritePermission = async () => {
+			if (!state.activeFileHandle || !support.requestPermission || state.activeFileKind !== 'text') {
+				return false;
+			}
+
+			try {
+				const permission = await state.activeFileHandle.requestPermission({ mode: 'readwrite' });
+				await updatePermissionUi();
+				return permission === 'granted';
+			} catch (error) {
+				setStatus(error instanceof Error ? error.message : 'Не удалось запросить право на запись.');
+				return false;
+			}
+		};
+
+		const saveActiveFile = async () => {
+			if (!state.activeFileHandle || !elements.editor || state.activeFileKind !== 'text') {
+				return;
+			}
+
+			const hasWriteAccess = state.canWriteActiveFile || (await requestWritePermission());
+
+			if (!hasWriteAccess) {
+				setStatus('Браузер не дал право на запись. Файл не изменён.');
+				return;
+			}
+
+			try {
+				const writable = await state.activeFileHandle.createWritable();
+				await writable.write(elements.editor.value);
+				await writable.close();
+
+				state.activeFileText = elements.editor.value;
+				setDirty(false);
+				await updatePermissionUi();
+				setStatus(`Сохранено в ${state.activeFileName}`);
+			} catch (error) {
+				setStatus(error instanceof Error ? error.message : 'Не удалось сохранить файл.');
+			}
+		};
+
+		elements.openDirectoryButton?.addEventListener('click', openDirectory);
+		elements.saveButton?.addEventListener('click', saveActiveFile);
+		elements.requestPermissionButton?.addEventListener('click', requestWritePermission);
+
+		elements.fileTree?.addEventListener('click', (event) => {
+			const button = event.target instanceof Element ? event.target.closest('button[data-entry-id]') : null;
+
+			if (!button || button.disabled) {
+				return;
+			}
+
+			const entry = findNodeById(state.treeNodes, button.dataset.entryId);
+
+			if (!entry) {
+				return;
+			}
+
+			if (entry.kind === 'directory') {
+				if (state.expandedDirectoryIds.has(entry.id)) {
+					state.expandedDirectoryIds.delete(entry.id);
+				} else {
+					state.expandedDirectoryIds.add(entry.id);
+				}
+
+				renderFileTree();
+				return;
+			}
+
+			openFileEntry(entry);
+		});
+
+		elements.editor?.addEventListener('input', () => {
+			setDirty(elements.editor.value !== state.activeFileText);
+		});
+
+		renderSupport();
+		updatePermissionUi();
+	</script>
+</Demo>

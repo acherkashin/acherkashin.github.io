@@ -7,6 +7,12 @@ export interface PlaygroundItem {
 
 export const playgrounds: PlaygroundItem[] = [
 	{
+		slug: 'file-system-access-demo',
+		title: 'File System Access Mini-IDE',
+		description: 'Мини-редактор локальной папки через File System Access API с явным контролем прав',
+		cover: null
+	},
+	{
 		slug: 'broadcast-channel-demo',
 		title: 'BroadcastChannel Demo',
 		description: 'Простой счётчик, который синхронизируется между несколькими вкладками',
