@@ -1,35 +1,25 @@
 type ContentMode = 'empty' | 'text' | 'image';
 type FileKind = 'text' | 'image' | 'unsupported';
 
-interface FileSystemPermissionOptions {
-	mode: 'read' | 'readwrite';
+type FileSystemAccessPermissionMode = 'read' | 'readwrite';
+
+interface FileSystemAccessPermissionOptions {
+	mode?: FileSystemAccessPermissionMode;
 }
 
-interface WritableFileStream {
-	write(data: string): Promise<void>;
-	close(): Promise<void>;
-}
-
-interface DemoFileHandle {
-	kind: 'file';
-	name: string;
-	getFile(): Promise<File>;
-	queryPermission?(options: FileSystemPermissionOptions): Promise<PermissionState>;
-	requestPermission?(options: FileSystemPermissionOptions): Promise<PermissionState>;
-	createWritable?(): Promise<WritableFileStream>;
-}
-
-interface DemoDirectoryHandle {
-	kind: 'directory';
-	name: string;
-	entries(): AsyncIterable<[string, DemoHandle]>;
-}
+type DemoFileHandle = Omit<FileSystemFileHandle, 'createWritable'> & {
+	createWritable?(options?: FileSystemCreateWritableOptions): Promise<FileSystemWritableFileStream>;
+	queryPermission?(options?: FileSystemAccessPermissionOptions): Promise<PermissionState>;
+	requestPermission?(options?: FileSystemAccessPermissionOptions): Promise<PermissionState>;
+};
 
 type DemoHandle = DemoFileHandle | DemoDirectoryHandle;
 
+type DemoDirectoryHandle = FileSystemDirectoryHandle;
+
 interface DemoWindow extends Window {
-	showDirectoryPicker?: (options?: { mode?: 'read' | 'readwrite' }) => Promise<DemoDirectoryHandle>;
-	FileSystemFileHandle?: { prototype: object };
+	showDirectoryPicker?: (options?: { mode?: FileSystemAccessPermissionMode }) => Promise<DemoDirectoryHandle>;
+	FileSystemFileHandle?: { prototype: FileSystemFileHandle };
 }
 
 interface BaseTreeNode {
@@ -270,7 +260,13 @@ const readDirectoryChildren = async (
 	let isTruncated = false;
 
 	for await (const [name, handle] of directoryHandle.entries()) {
-		entries.push({ handle, name });
+		entries.push({
+			handle:
+				handle.kind === 'directory'
+					? (handle as DemoDirectoryHandle)
+					: (handle as DemoFileHandle),
+			name
+		});
 
 		if (entries.length >= maxEntriesPerDirectory) {
 			isTruncated = true;
