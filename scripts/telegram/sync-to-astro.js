@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { containsAdvertisingMarker } from "./post-filter.js";
+
 const DEFAULT_EXPORT_DIR = path.resolve(process.cwd(), ".telegram-export");
 const DEFAULT_POSTS_DIR = path.resolve(process.cwd(), "src/pages/posts");
 const DEFAULT_MEDIA_DIR = path.resolve(process.cwd(), "public/telegram-media");
@@ -96,6 +98,107 @@ async function copyDirectoryContents(sourceDir, targetDir) {
   return copied;
 }
 
+function parseFrontmatter(markdownRaw) {
+  const match = markdownRaw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  if (!match) return { frontmatter: "", body: markdownRaw };
+  return {
+    frontmatter: match[1],
+    body: markdownRaw.slice(match[0].length),
+  };
+}
+
+function parseYamlList(frontmatter, fieldName) {
+  const lines = frontmatter.split(/\r?\n/);
+  const startIndex = lines.findIndex((line) => line === `${fieldName}:`);
+  if (startIndex < 0) return [];
+
+  const values = [];
+  for (let i = startIndex + 1; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (/^\S/.test(line)) break;
+
+    const itemMatch = line.match(/^\s+-\s+(.+?)\s*$/);
+    if (!itemMatch) continue;
+
+    const rawValue = itemMatch[1];
+    if (rawValue.startsWith('"') && rawValue.endsWith('"')) {
+      try {
+        values.push(JSON.parse(rawValue));
+      } catch {
+        // Ignore malformed generated frontmatter values.
+      }
+    } else if (rawValue.startsWith("'") && rawValue.endsWith("'")) {
+      values.push(rawValue.slice(1, -1));
+    } else {
+      values.push(rawValue);
+    }
+  }
+
+  return values;
+}
+
+function mediaFileNameFromUrl(value) {
+  if (typeof value !== "string") return null;
+  const prefix = "/telegram-media/";
+  if (!value.startsWith(prefix)) return null;
+
+  let fileName;
+  try {
+    fileName = decodeURIComponent(value.slice(prefix.length));
+  } catch {
+    return null;
+  }
+
+  if (!fileName || path.basename(fileName) !== fileName) return null;
+  return fileName;
+}
+
+function parseMarkdownDocument(markdownRaw) {
+  const { frontmatter, body } = parseFrontmatter(markdownRaw);
+  const mediaFiles = parseYamlList(frontmatter, "media")
+    .map(mediaFileNameFromUrl)
+    .filter(Boolean);
+
+  return {
+    body,
+    mediaFiles,
+    publishDate: parseFrontmatterPublishDate(markdownRaw),
+  };
+}
+
+async function collectReferencedMedia(markdownDir) {
+  const files = await listFilesRecursive(markdownDir);
+  const referenced = new Set();
+
+  for (const filePath of files) {
+    if (path.extname(filePath).toLowerCase() !== ".md") continue;
+    const raw = await fs.readFile(filePath, "utf8");
+    const { mediaFiles } = parseMarkdownDocument(raw);
+    for (const fileName of mediaFiles) {
+      referenced.add(fileName);
+    }
+  }
+
+  return referenced;
+}
+
+async function copyReferencedMedia(markdownDir, sourceMediaDir, targetMediaDir) {
+  const referenced = await collectReferencedMedia(markdownDir);
+  let copied = 0;
+
+  for (const fileName of referenced) {
+    const sourceFile = path.join(sourceMediaDir, fileName);
+    if (!(await pathExists(sourceFile))) {
+      throw new Error(`Missing referenced Telegram media: ${sourceFile}`);
+    }
+    await ensureDir(targetMediaDir);
+    await fs.copyFile(sourceFile, path.join(targetMediaDir, fileName));
+    copied += 1;
+  }
+
+  return copied;
+}
+
 async function removeFilesByExtension(rootDir, extension) {
   const files = await listFilesRecursive(rootDir);
   let removed = 0;
@@ -126,22 +229,54 @@ function parseFrontmatterPublishDate(markdownRaw) {
   return parsed;
 }
 
-async function removeRecentMarkdownPosts(postsDir, cutoffDate) {
+async function removeWeeklyMarkdownPosts(postsDir, mediaDir, cutoffDate) {
   const files = await listFilesRecursive(postsDir);
-  let removed = 0;
+  const records = [];
 
   for (const filePath of files) {
     if (path.extname(filePath).toLowerCase() !== ".md") continue;
     const raw = await fs.readFile(filePath, "utf8");
-    const publishDate = parseFrontmatterPublishDate(raw);
-    if (!publishDate) continue;
-    if (publishDate.getTime() >= cutoffDate.getTime()) {
-      await fs.rm(filePath, { force: true });
-      removed += 1;
-    }
+    const parsed = parseMarkdownDocument(raw);
+    const isRecent =
+      parsed.publishDate !== null &&
+      parsed.publishDate.getTime() >= cutoffDate.getTime();
+    const isAdvertising = containsAdvertisingMarker(parsed.body);
+    records.push({ filePath, ...parsed, isRecent, isAdvertising });
   }
 
-  return removed;
+  const removedRecords = records.filter(
+    (record) => record.isRecent || record.isAdvertising,
+  );
+  const retainedMedia = new Set(
+    records
+      .filter((record) => !record.isRecent && !record.isAdvertising)
+      .flatMap((record) => record.mediaFiles),
+  );
+  const mediaToRemove = new Set(
+    removedRecords.flatMap((record) => record.mediaFiles),
+  );
+
+  let removedMedia = 0;
+  for (const fileName of mediaToRemove) {
+    if (retainedMedia.has(fileName)) continue;
+    const mediaPath = path.join(mediaDir, fileName);
+    if (!(await pathExists(mediaPath))) continue;
+    await fs.rm(mediaPath, { force: true });
+    removedMedia += 1;
+  }
+
+  for (const record of removedRecords) {
+    await fs.rm(record.filePath, { force: true });
+  }
+
+  return {
+    removedPosts: removedRecords.length,
+    removedRecentPosts: removedRecords.filter((record) => record.isRecent).length,
+    removedAdvertisingPosts: removedRecords.filter(
+      (record) => record.isAdvertising,
+    ).length,
+    removedMedia,
+  };
 }
 
 async function runBootstrapSync(args) {
@@ -156,7 +291,11 @@ async function runBootstrapSync(args) {
   await ensureDir(args.mediaDir);
 
   const copiedPosts = await copyDirectoryContents(sourceMarkdownDir, args.postsDir);
-  const copiedMedia = await copyDirectoryContents(sourceMediaDir, args.mediaDir);
+  const copiedMedia = await copyReferencedMedia(
+    sourceMarkdownDir,
+    sourceMediaDir,
+    args.mediaDir,
+  );
 
   return { removedPosts, copiedPosts, copiedMedia };
 }
@@ -169,11 +308,24 @@ async function runWeeklySync(args) {
   await ensureDir(args.postsDir);
   await ensureDir(args.mediaDir);
 
-  const removedRecentPosts = await removeRecentMarkdownPosts(args.postsDir, cutoffDate);
+  const removal = await removeWeeklyMarkdownPosts(
+    args.postsDir,
+    args.mediaDir,
+    cutoffDate,
+  );
   const copiedPosts = await copyDirectoryContents(sourceMarkdownDir, args.postsDir);
-  const copiedMedia = await copyDirectoryContents(sourceMediaDir, args.mediaDir);
+  const copiedMedia = await copyReferencedMedia(
+    sourceMarkdownDir,
+    sourceMediaDir,
+    args.mediaDir,
+  );
 
-  return { removedRecentPosts, copiedPosts, copiedMedia, cutoffDate: cutoffDate.toISOString() };
+  return {
+    ...removal,
+    copiedPosts,
+    copiedMedia,
+    cutoffDate: cutoffDate.toISOString(),
+  };
 }
 
 async function main() {
@@ -200,7 +352,10 @@ async function main() {
   console.log(`Cutoff: ${result.cutoffDate}`);
   console.log(`Posts dir: ${args.postsDir}`);
   console.log(`Media dir: ${args.mediaDir}`);
+  console.log(`Removed markdown posts: ${result.removedPosts}`);
   console.log(`Removed recent markdown posts: ${result.removedRecentPosts}`);
+  console.log(`Removed advertising markdown posts: ${result.removedAdvertisingPosts}`);
+  console.log(`Removed media files: ${result.removedMedia}`);
   console.log(`Copied markdown posts: ${result.copiedPosts}`);
   console.log(`Copied media files: ${result.copiedMedia}`);
 }

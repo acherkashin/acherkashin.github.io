@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { isAdvertisingPostGroup } from "./post-filter.js";
+
 const DEFAULT_INPUT_ROOT = path.resolve(process.cwd(), ".telegram-export");
 const MARKDOWN_DIRNAME = "markdown";
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"]);
@@ -489,9 +491,15 @@ async function main() {
   const groupedPosts = buildGroupedPosts(payload.posts);
   const usedNames = new Set();
   let written = 0;
+  let skippedAdvertising = 0;
 
   for (const group of groupedPosts) {
     const sortedGroup = group.slice().sort(comparePost);
+    if (isAdvertisingPostGroup(sortedGroup)) {
+      skippedAdvertising += 1;
+      continue;
+    }
+
     const mediaLinks = await collectMediaLinks(sortedGroup, sourceDir);
     const { canonicalId, body, data } = buildFrontmatter(
       sortedGroup,
@@ -520,6 +528,7 @@ async function main() {
   console.log(`Source export folder: ${sourceDir}`);
   console.log(`Markdown output: ${outputDir}`);
   console.log(`Markdown files written: ${written}`);
+  console.log(`Advertising posts skipped: ${skippedAdvertising}`);
 }
 
 main().catch((error) => {

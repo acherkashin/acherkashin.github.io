@@ -10,6 +10,7 @@ const DEFAULT_OUTPUT_ROOT = path.resolve(process.cwd(), ".telegram-export");
 const ENV_FILE = path.resolve(process.cwd(), ".env");
 const CUSTOM_REACTION_PREFIX = "custom:";
 const CUSTOM_EMOJI_BATCH_SIZE = 200;
+const CONNECT_TIMEOUT_MS = 30_000;
 
 function parseArgs(argv) {
   const envChannel = process.env.TG_CHANNEL;
@@ -305,6 +306,21 @@ async function withFloodWaitRetry(fn, retries = 3) {
   throw new Error("Unexpected retry loop termination.");
 }
 
+async function withTimeout(promise, timeoutMs, label) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function downloadMessageMedia(client, message, mediaDir) {
   const info = inferMediaInfo(message, 1);
   if (!info) return [];
@@ -417,7 +433,14 @@ async function main() {
   });
 
   console.log("Connecting to Telegram...");
-  await client.connect();
+  const connected = await withTimeout(
+    client.connect(),
+    CONNECT_TIMEOUT_MS,
+    "Telegram connection",
+  );
+  if (!connected || !client.connected) {
+    throw new Error("Failed to connect to Telegram.");
+  }
   const authorized = await client.checkAuthorization();
   if (!authorized) {
     throw new Error("Unauthorized TG_STRING_SESSION. Regenerate TG_STRING_SESSION and retry.");
